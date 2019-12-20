@@ -1,4 +1,6 @@
 version: '2'
+# login: user
+# password: bitnami
 services:
   jenkins:
     # image: 'bitnami/jenkins:2'
