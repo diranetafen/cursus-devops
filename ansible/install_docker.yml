@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  become: true
+  vars:
+    pip_install_packages:
+      - name: docker
+  pre_tasks:
+    - name: Install EPEL repo
+      yum: name=epel-release state=present
+
+    - name: install python-pip
+      yum: name=python-pip state=present update_cache=yes
+  roles:
+    - geerlingguy.pip
+    - geerlingguy.docker
