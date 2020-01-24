@@ -1,0 +1,76 @@
+---
+
+# This playbook is used to deploy student-list application based on Docker
+
+# build and push builded images
+
+- name: Log into DockerHub
+  docker_login:
+    username: "{{ docker_hub_login }}"
+    email: "{{ docker_hub_email }}"
+    password: "{{ docker_hub_password }}"
+- name: create project directory
+  file:
+    path: "{{home}}/student-list"
+    state: directory
+- name: copy devops private key file
+  copy:
+    content: '{{ gitlab_private_key }}'
+    dest: "{{home}}/.ssh/id_rsa"
+    owner: centos
+
+- name: Retrieve stident-list addons source code
+  git:
+    repo: "{{ student_list_source_repo  }}"
+    dest: "{{ home }}/student-list"
+    accept_hostkey: yes
+    force: yes
+    recursive: no
+    key_file: "{{ home }}/.ssh/id_rsa"
+    version: "{{ student_list_source_branch }}"
+
+- name: Build api image and push it to Docker Hub
+  docker_image:
+    path: "{{ home }}/student-list/simple_api"
+    name: "{{ docker_hub_login }}/student-list-api"
+    push: yes
+    tag: "{{student_list_docker_image_tag}}"
+
+# docker network 
+
+- name: crete docker network to interconnect containers
+  docker_network:
+    name: student-list_network 
+
+# deploy api
+
+- name: Deploy api
+  docker_container:
+    name: pozos-api 
+    hostname: pozos-api
+    image: "{{ docker_hub_login }}/student-list-api:{{student_list_docker_image_tag}}"
+    state: started
+    volumes:
+      - "{{ home }}/student-list/simple_api/student_age.json:/data/student_age.json"
+    networks:
+      - name: student-list_network 
+    ports:
+      - "4000:5000"
+
+# deploy frontend
+
+- name: Deploy frontend
+  docker_container:
+    name: frontend
+    image: php:apache
+    state: started
+    networks:
+      - name: student-list_network
+    volumes:
+      - "{{ home }}/student-list/website:/var/www/html"
+    env:
+      USERNAME: "toto"
+      PASSWORD: "python"
+    ports:
+      - "80:80"
+

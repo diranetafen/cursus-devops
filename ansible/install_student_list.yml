@@ -1,0 +1,9 @@
+---
+- name: Deploy student-list app 
+  hosts: localhost 
+  gather_facts: False
+  become: true
+  vars_files:
+    - "files/secrets/devops.yml"
+  roles:
+    - { role: student-list }

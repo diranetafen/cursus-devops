@@ -1,0 +1,14 @@
+---
+
+student_list_source_repo: "git@gitlab.com:diranerpi/student-list.git"
+student_list_source_branch: "master"
+
+student_list_docker_image_tag: "v1"
+
+home: "/home/centos"
+
+#secret data vaulted
+gitlab_private_key: "{{ vault_gitlab_private_key }}"
+docker_hub_login: "{{ vault_docker_hub_login }}"
+docker_hub_email: "{{ vault_docker_hub_email }}"
+docker_hub_password: "{{ vault_docker_hub_password }}"
