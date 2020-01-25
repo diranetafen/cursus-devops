@@ -4,5 +4,6 @@
 
 # Module directory
 terraform/.terraform/
+terraform/student-list/.terraform/
 
 .idea
