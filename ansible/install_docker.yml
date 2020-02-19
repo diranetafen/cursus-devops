@@ -6,10 +6,11 @@
       - name: docker
   pre_tasks:
     - name: Install EPEL repo
-      yum: name=epel-release state=present
+      package: name=epel-release state=present
+      when: ansible_distribution == "CentOS"
 
     - name: install python-pip
-      yum: name=python-pip state=present update_cache=yes
+      package: name=python-pip state=present update_cache=yes
   roles:
     - geerlingguy.pip
     - geerlingguy.docker

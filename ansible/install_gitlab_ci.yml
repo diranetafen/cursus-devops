@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  become: true
+  vars:
+    docker_gitlab_gitlab_rb_template: templates/gitlab.rb.j2
+    docker_gitlab_gitlab_rb_location: /opt/gitlab/etc
+    docker_gitlab_service_template: templates/gitlab-docker.service.j2
+    docker_gitlab_docker_compose_template: templates/gitlab-compose.yml.j2
+    docker_gitlab_docker_compose_binary_full_path: /usr/local/bin/docker-compose
+    # docker_gitlab_runner_config_toml_template: templates/config.toml.j2
+  roles:
+    - ansible-docker-gitlab 
