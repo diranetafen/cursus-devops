@@ -44,24 +44,28 @@ Resources:
       KeyName: !Ref 'KeyName'
       ImageId: 'ami-003f19e0e687de1cd'
       UserData:
-        'Fn::Base64':
-          !Sub |
-            #!/bin/bash
-            apt-get install dirmngr --install-recommends
-            apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
-            apt update
-            apt install -y ansible
+        'Fn::Base64': !Join
+          - ''
+          - - !Sub |
+              #!/bin/sh
+              echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
+              apt-get update
+              apt-get -y install dirmngr --install-recommends
+              apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+              apt update
+              apt -y install ansible
 
-            # retrieve ansible code
-            apt -y install git
-            git clone https://github.com/diranetafen/cursus-devops.git
-            cd cursus-devops/ansible
-            ansible-galaxy install -r roles/requirements.yml
-            ansible-playbook install_docker.yml
-            usermod -aG docker admin
-            #before install gitlab-ci we get the punlic dns
-            GITLAB_EXTERNAL_HOSTNAME=`curl http://169.254.169.254/latest/meta-data/public-hostname`
-            ansible-playbook install_gitlab_ci.yml --extra-var "gitlab_external_hostname=${GITLAB_EXTERNAL_HOSTNAME}"
+              # retrieve ansible code
+              apt -y install git
+              git clone https://github.com/diranetafen/cursus-devops.git
+              cd cursus-devops/ansible
+              ansible-galaxy install -r roles/requirements.yml
+              ansible-playbook install_docker.yml
+              usermod -aG docker admin
+              #before install gitlab-ci we get the punlic dns
+            - |
+              GITLAB_EXTERNAL_HOSTNAME=`curl http://169.254.169.254/latest/meta-data/public-hostname`
+              ansible-playbook install_gitlab_ci.yml --extra-var "gitlab_external_hostname=${GITLAB_EXTERNAL_HOSTNAME}"
 
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -76,6 +80,10 @@ Resources:
         FromPort: 80
         ToPort: 80
         CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: !Ref 'SSHLocation'
 Outputs:
   InstanceId:
     Description: InstanceId of the newly created EC2 instance
@@ -89,3 +97,4 @@ Outputs:
   PublicIP:
     Description: Public IP address of the newly created EC2 instance
     Value: !GetAtt [DockerInstance, PublicIp]
+
