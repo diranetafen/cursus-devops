@@ -58,10 +58,8 @@ Resources:
             git clone https://github.com/diranetafen/cursus-devops.git
             cd cursus-devops/ansible
             ansible-galaxy install -r roles/requirements.yml
-            ansible-playbook install_docker.yml
-            sudo usermod -aG docker centos
-            cd ../tower
-            docker-compose up -d
+            usermod -aG docker centos
+            docker run -d -p 443:443 --name tower ybalt/ansible-tower
 
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -75,6 +73,10 @@ Resources:
       - IpProtocol: tcp
         FromPort: 80
         ToPort: 80
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
         CidrIp: !Ref 'SSHLocation'
 Outputs:
   InstanceId:
