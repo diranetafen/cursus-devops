@@ -59,7 +59,7 @@ Resources:
             cd cursus-devops/ansible
             ansible-galaxy install -r roles/requirements.yml
             ansible-playbook install_docker.yml
-            sudo usermod -aG Tower centos
+            sudo usermod -aG docker centos
             cd ../tower
             docker-compose up -d
 
