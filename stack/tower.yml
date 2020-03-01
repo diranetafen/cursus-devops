@@ -58,6 +58,7 @@ Resources:
             git clone https://github.com/diranetafen/cursus-devops.git
             cd cursus-devops/ansible
             ansible-galaxy install -r roles/requirements.yml
+            ansible-playbook install_docker.yml
             usermod -aG docker centos
             docker run -d -p 443:443 --name tower ybalt/ansible-tower
 
