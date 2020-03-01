@@ -62,7 +62,7 @@ Resources:
             usermod -aG docker centos
             cd ../tower/
             tar -xzvf awx.tar.gz -C ~/
-            cd ~/awx/awxcompose/
+            cd ~/.awx/awxcompose/
             docker-compose up -d
 
 
