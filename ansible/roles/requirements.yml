@@ -1,8 +1,10 @@
-# Install a role for pip 
 - src: geerlingguy.pip 
-
-# Install a role for docker 
+- src: geerlingguy.repo-epel
+- src: geerlingguy.git
+- src: geerlingguy.ansible 
+- src: geerlingguy.nodejs 
 - src: geerlingguy.docker 
+- src: geerlingguy.awx
 
 # Install a role for gitlab/gitlab-runner
 - src: https://github.com/HP41/ansible-docker-gitlab.git 
