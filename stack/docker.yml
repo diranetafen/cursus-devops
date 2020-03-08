@@ -12,6 +12,7 @@ Parameters:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
     Type: AWS::EC2::KeyPair::KeyName
     ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    Default: devops
   InstanceType:
     Description: Docker EC2 instance type
     Type: String
