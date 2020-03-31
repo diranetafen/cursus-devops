@@ -42,7 +42,7 @@ Resources:
       InstanceType: !Ref 'InstanceType'
       SecurityGroups: [!Ref 'InstanceSecurityGroup']
       BlockDeviceMappings:
-        - DeviceName: /dev/sda1
+        - DeviceName: xvda 
           Ebs:
             VolumeSize: 20
       KeyName: !Ref 'KeyName'
