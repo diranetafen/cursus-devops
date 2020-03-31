@@ -42,6 +42,10 @@ Resources:
     Properties:
       InstanceType: !Ref 'InstanceType'
       SecurityGroups: [!Ref 'InstanceSecurityGroup']
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
       KeyName: !Ref 'KeyName'
       ImageId: 'ami-0083662ba17882949'
       UserData:
