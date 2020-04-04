@@ -3,14 +3,16 @@ services:
   gitlab:
     restart: always
     container_name: gitlab
-    image: gitlab/gitlab-ce:9.3.0-ce.0
+    image: "gitlab/{{ gitlab_version }}"
     ports:
       - "80:80"
       - "443:443"
+      - "{{ gitlab_port_ssh }}:22"
     volumes:
       - /opt/gitlab/etc:/etc/gitlab
       - /opt/gitlab/var/log:/var/log/gitlab
       - /opt/gitlab/var/opt:/var/opt/gitlab
+      - /tmp/certs/:/etc/gitlab/ssl/
   gitlab-runner-register:
     restart: "no"
     container_name: gitlab_runner_register
