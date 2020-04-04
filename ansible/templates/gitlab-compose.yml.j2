@@ -12,7 +12,7 @@ services:
       - /opt/gitlab/etc:/etc/gitlab
       - /opt/gitlab/var/log:/var/log/gitlab
       - /opt/gitlab/var/opt:/var/opt/gitlab
-      - /tmp/certs/:/etc/gitlab/ssl/
+      - /opt/gitlab/cert/:/etc/gitlab/ssl/
   gitlab-runner-register:
     restart: "no"
     container_name: gitlab_runner_register
