@@ -405,13 +405,13 @@ gitlab_rails['auto_migrate'] = true
 ##! Docs: https://docs.gitlab.com/ce/administration/container_registry.html
 ################################################################################
 
-# registry_external_url 'https://registry.gitlab.example.com'
+registry_external_url 'https://{{ gitlab_external_hostname }}'
 
 ### Settings used by GitLab application
-gitlab_rails['registry_enabled'] = false
+# gitlab_rails['registry_enabled'] = false
 # gitlab_rails['registry_host'] = "registry.gitlab.example.com"
 # gitlab_rails['registry_port'] = "5005"
-# gitlab_rails['registry_path'] = "/var/opt/gitlab/gitlab-rails/shared/registry"
+gitlab_rails['registry_path'] = "/var/opt/gitlab/gitlab-rails/shared/registry"
 
 ###! **Do not change the following 3 settings unless you know what you are
 ###!   doing**
@@ -420,7 +420,7 @@ gitlab_rails['registry_enabled'] = false
 # gitlab_rails['registry_issuer'] = "omnibus-gitlab-issuer"
 
 ### Settings used by Registry application
-# registry['enable'] = true
+registry['enable'] = true
 # registry['username'] = "registry"
 # registry['group'] = "registry"
 # registry['uid'] = nil
@@ -1179,7 +1179,9 @@ mattermost['enable'] = false
 # You just have to change the key "nginx['some_settings']" with "registry_nginx['some_settings']"
 
 # Below you can find settings that are exclusive to "Registry NGINX"
-# registry_nginx['enable'] = false
+registry_nginx['enable'] = true
+registry_nginx['ssl_certificate'] ="/etc/gitlab/ssl/{{ gitlab_external_hostname }}.crt"
+registry_nginx['ssl_certificate_key'] ="/etc/gitlab/ssl/{{ gitlab_external_hostname }}.key"
 
 # registry_nginx['proxy_set_headers'] = {
 #  "Host" => "$http_host",
