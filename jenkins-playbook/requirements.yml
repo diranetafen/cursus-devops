@@ -1,0 +1,15 @@
+# install java
+
+- src: geerlingguy.java
+
+# install jenkins
+
+#- src: geerlingguy.jenkins
+
+# install pip
+
+- src: geerlingguy.pip
+
+# install docker
+
+- src: geerlingguy.docker
