@@ -60,8 +60,8 @@ Resources:
             # retrieve ansible code
             yum -y install git
             git clone https://github.com/diranetafen/cursus-devops.git
-            cd cursus-devops/jenkins-playbook
-            ansible-galaxy role install -r requirements.yml
+            cd cursus-devops/ansible 
+            ansible-galaxy role install -r roles/requirements.yml
             ansible-playbook install_jenkins.yml
             sudo usermod -aG docker centos
             sudo chmod 777 /var/run/docker.sock
