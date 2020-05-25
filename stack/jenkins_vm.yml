@@ -68,9 +68,6 @@ Resources:
            
             # add the user centos in the docker group
             sudo usermod -aG docker centos
-
-            # permission to execute docker commands with the socket
-            sudo chmod 777 /var/run/docker.sock
             
             # Enable and start docker
             sudo systemctl enable docker

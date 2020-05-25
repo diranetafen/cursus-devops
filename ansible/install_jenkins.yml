@@ -6,6 +6,8 @@
     jenkins_hostname: localhost
     java_packages:
       - java-1.8.0-openjdk
+
+    jenkins_plugins: []
     
     pip_install_packages:
       - name: docker
@@ -16,19 +18,12 @@
       name: '*'
       update_only: yes
       update_cache: yes
-      state: latest
-
-  - name: install  nano  
-    yum:
-      name: nano
-      state: installed
- 
+      state: latest 
 
   - name: Install epel release
     yum: 
       name: epel-release
       state: installed
-
   
 
   roles:
