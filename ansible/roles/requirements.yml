@@ -6,3 +6,10 @@
 
 # Install a role for gitlab/gitlab-runner
 - src: https://github.com/HP41/ansible-docker-gitlab.git 
+
+# install java
+- src: geerlingguy.java
+
+# install jenkins
+- src: geerlingguy.jenkins
+

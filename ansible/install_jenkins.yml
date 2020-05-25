@@ -1,0 +1,33 @@
+- hosts: localhost
+  become: true
+   
+  vars:
+    jenkins_hostname: localhost
+    java_packages:
+      - java-1.8.0-openjdk
+
+    jenkins_plugins: []
+    
+    pip_install_packages:
+      - name: docker
+
+  pre_tasks:
+  - name: update all packages 
+    yum:
+      name: '*'
+      update_only: yes
+      update_cache: yes
+      state: latest 
+
+  - name: Install epel release
+    yum: 
+      name: epel-release
+      state: installed
+  
+
+  roles:
+    - role: geerlingguy.pip
+    - role: geerlingguy.docker
+    - role: geerlingguy.java
+    - role: geerlingguy.jenkins
+     
