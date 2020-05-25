@@ -1,7 +1,6 @@
 - hosts: localhost
   become: true
-  gather_facts: true
-  
+   
   vars:
     jenkins_hostname: localhost
     java_packages:
