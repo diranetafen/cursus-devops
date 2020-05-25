@@ -66,9 +66,13 @@ Resources:
             ansible-galaxy role install -r roles/requirements.yml
             ansible-playbook install_jenkins.yml
            
-            # add the user centos in the docker group
+            # add centos user to the docker group
             sudo usermod -aG docker centos
             
+            # add jenkins user to the docker group and restart the service
+            sudo usermod -aG docker jenkins
+            sudo systemctl restart jenkins
+
             # Enable and start docker
             sudo systemctl enable docker
             sudo systemctl start docker
