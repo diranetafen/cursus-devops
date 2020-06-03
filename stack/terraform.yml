@@ -13,7 +13,7 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     ConstraintDescription: must be the name of an existing EC2 KeyPair.
   InstanceType:
-    Description: Docker EC2 instance type
+    Description: Terraform EC2 instance type
     Type: String
     Default: t2.micro
     AllowedValues: [t2.nano, t2.micro, t2.small, t2.medium, t2.large, t2.xlarge, t2.2xlarge,
@@ -36,7 +36,36 @@ Parameters:
     ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
 
 Resources:
-  DockerInstance:
+  ec2Role:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+  ec2InstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref ec2Role
+  ec2RolePolicies:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: ec2
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: '*'
+            Resource: '*'
+      Roles:
+        - !Ref ec2Role
+  TerraformInstance:
     Type: AWS::EC2::Instance
     Properties:
       InstanceType: !Ref 'InstanceType'
@@ -47,16 +76,17 @@ Resources:
             VolumeSize: 20
       KeyName: !Ref 'KeyName'
       ImageId: 'ami-0083662ba17882949'
+      IamInstanceProfile: !Ref ec2InstanceProfile
       UserData:
         'Fn::Base64':
           !Sub |
             #!/bin/bash
             yum -y update
-            yum -y install epel-release 
+            yum -y install epel-release
 
             # install ansible
             yum -y install ansible
-            
+
             # retrieve ansible code
             yum -y install git
             git clone https://github.com/diranetafen/cursus-devops.git
@@ -82,13 +112,14 @@ Resources:
 Outputs:
   InstanceId:
     Description: InstanceId of the newly created EC2 instance
-    Value: !Ref 'DockerInstance'
+    Value: !Ref 'TerraformInstance'
   AZ:
     Description: Availability Zone of the newly created EC2 instance
-    Value: !GetAtt [DockerInstance, AvailabilityZone]
+    Value: !GetAtt [TerraformInstance, AvailabilityZone]
   PublicDNS:
     Description: Public DNSName of the newly created EC2 instance
-    Value: !GetAtt [DockerInstance, PublicDnsName]
+    Value: !GetAtt [TerraformInstance, PublicDnsName]
   PublicIP:
     Description: Public IP address of the newly created EC2 instance
-    Value: !GetAtt [DockerInstance, PublicIp]
+    Value: !GetAtt [TerraformInstance, PublicIp]
+
