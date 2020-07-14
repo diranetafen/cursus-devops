@@ -1,0 +1,732 @@
+AWSTemplateFormatVersion: '2010-09-09' 
+
+Metadata:
+  License: Apache-2.0
+
+Description: 'AWS CloudFormation Sample Template EC2InstanceWithSecurityGroupSample:
+  Create an Amazon EC2 instance running the Amazon Linux AMI. The AMI is chosen based
+  on the region in which the stack is run. This example creates an EC2 security group
+  for the instance to give you SSH access. **WARNING** This template creates an Amazon
+  EC2 instance. You will be billed for the AWS resources used if you create a stack
+  from this template.'
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  
+  InstanceTypeGitLab:
+    Description: GitLab EC2 instance type
+    Type: String
+    Default: t2.medium
+    AllowedValues: [t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      m5.large, m5.xlarge, m5.2xlarge, m5.4xlarge,
+      c5.large, c5.xlarge, c5.2xlarge, c5.4xlarge, c5.9xlarge,
+      g3.8xlarge,
+      r5.large, r5.xlarge, r5.2xlarge, r5.4xlarge, r3.12xlarge,
+      i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
+    ConstraintDescription: must be a valid EC2 instance type.
+    
+  InstanceTypeKubernetesMaster:
+    Description: Kubernetes master EC2 instance type
+    Type: String
+    Default: t2.medium
+    AllowedValues: [t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      m5.large, m5.xlarge, m5.2xlarge, m5.4xlarge,
+      c5.large, c5.xlarge, c5.2xlarge, c5.4xlarge, c5.9xlarge,
+      g3.8xlarge,
+      r5.large, r5.xlarge, r5.2xlarge, r5.4xlarge, r3.12xlarge,
+      i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
+    ConstraintDescription: must be a valid EC2 instance type.
+ 
+  InstanceTypeKubernetesWorker:
+    Description: Kubernetes worker EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.nano, t2.micro, t2.small, t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      m5.large, m5.xlarge, m5.2xlarge, m5.4xlarge,
+      c5.large, c5.xlarge, c5.2xlarge, c5.4xlarge, c5.9xlarge,
+      g3.8xlarge,
+      r5.large, r5.xlarge, r5.2xlarge, r5.4xlarge, r3.12xlarge,
+      i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
+    ConstraintDescription: must be a valid EC2 instance type.  
+   
+  PrivateKey:
+    Description: PrivateKey
+    Type: String
+    
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x. 
+
+  ImageType:
+    Description: Image type for deployment
+    Default: "Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd"
+    Type: String
+    AllowedValues: 
+      - "Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd"
+      - "CentOS Linux 7 (Core) - ami-0083662ba17882949"
+    ConstraintDescription: must specify debian or centos
+    
+Conditions:
+  DebianImage: !Equals [!Ref ImageType, "Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd"]
+  CentosImage: !Equals [!Ref ImageType, "CentOS Linux 7 (Core) - ami-0083662ba17882949"]
+  
+Resources:
+  ec2RoleDescribeInstance:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+
+  ec2InstanceProfileDescribeInstance:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref ec2RoleDescribeInstance
+
+  ec2RolePoliciesDescribeInstance:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: ec2RoleDescribeInstance
+      PolicyDocument:
+        Statement:
+            #Allow permission to describe all ec2 instances
+          - Effect: Allow
+            Action: 'ec2:DescribeInstances'
+            Resource: '*'
+      Roles:
+        - !Ref ec2RoleDescribeInstance
+  
+  GitLabServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'GitLabServer'
+      InstanceType: !Ref 'InstanceTypeGitLab'
+      SecurityGroups: [!Ref 'InstanceSecurityGroupGitLab']
+      BlockDeviceMappings:
+        - DeviceName: 
+            !If [DebianImage, xvda, !If [CentosImage, /dev/sda1, ' ']]
+          Ebs:
+            VolumeSize: 20 
+            DeleteOnTermination: true     
+      ImageId:
+        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0083662ba17882949', ' ']]
+      IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance      
+      KeyName: !Ref 'KeyName'
+      UserData:
+        'Fn::Base64':
+          !Sub |
+              #!/bin/sh
+              # #Based packages installation
+              echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
+              apt-get update
+              apt-get -y install dirmngr --install-recommends
+              apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+              apt-get update
+              apt-get -y install ansible
+
+              # retrive ansible code and Docker installation with Ansible
+              apt-get -y install git
+              git clone https://github.com/diranetafen/cursus-devops.git
+              cd cursus-devops/ansible
+              ansible-galaxy install -r roles/requirements.yml
+              ansible-playbook install_docker.yml
+              usermod -aG docker admin
+              
+              # AWSCLI 2.x.x installation 
+              sudo apt-get install unzip -y
+              sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              sudo unzip awscliv2.zip
+              sudo ./aws/install
+              
+              # Retrieve private key AWS and setting permission
+              sudo echo ${PrivateKey} > /home/admin/sshkey
+              sudo sed -i 's/-----BEGIN RSA PRIVATE KEY-----//g;s/-----END RSA PRIVATE KEY-----//g;' /home/admin/sshkey
+              sudo cat /home/admin/sshkey | tr ' ' '\n' > /home/admin/ssh
+              sudo echo "-----BEGIN RSA PRIVATE KEY-----" > /home/admin/.sshkey
+              sudo sed '/^$/d' /home/admin/ssh >> /home/admin/.sshkey
+              sudo echo "-----END RSA PRIVATE KEY-----" >> /home/admin/.sshkey
+              sudo chmod 400 /home/admin/.sshkey
+              sudo rm -fr /home/admin/sshkey 
+              sudo rm -fr /home/admin/ssh
+              
+              # Get Public Hostname 
+              GITLAB_EXTERNAL_HOSTNAME=$(curl http://169.254.169.254/latest/meta-data/public-hostname)
+              sudo mkdir -p  /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME
+              sudo mkdir -p /opt/gitlab/cert/
+              
+              # Generate selfsigned certificate
+              sudo echo -e "\n\n\n\n\n"$GITLAB_EXTERNAL_HOSTNAME"\n" | openssl req -newkey rsa:4096 -nodes -sha256 -keyout /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.key -x509 -days 365 -out /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.crt
+               
+              # Setting permissions for .crt and .key files 
+              sudo chmod 600 /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.key
+              sudo chmod 600 /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.crt
+               
+               # Copy certficate and key in folder GitLab
+              sudo cp /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.key /opt/gitlab/cert/$GITLAB_EXTERNAL_HOSTNAME.key
+              sudo cp /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.crt /opt/gitlab/cert/$GITLAB_EXTERNAL_HOSTNAME.crt
+
+              # Deployment GitLab CE with Docker and Ansible
+              ansible-playbook install_gitlab_ci.yml --extra-var "gitlab_external_hostname=$GITLAB_EXTERNAL_HOSTNAME"              
+              
+              # Remove key and rename certificate
+              sudo rm -f /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.key
+              sudo mv /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.crt /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/ca.crt
+              
+              # Get Private IP Address for Kubernest Master, Worker1 and Worker2         
+              until KubernetesMasterPrivateIP=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PrivateIpAddress]" --filters Name=tag:Name,Values=KubernetesMaster Name=instance-state-name,Values=running --output text); do
+              if [  -z $KubernetesMasterPrivateIP  ]; then
+                sudo /usr/local/bin/aws configure set region us-east-1
+                KubernetesMasterPrivateIP=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PrivateIpAddress]" --filters Name=tag:Name,Values=KubernetesMaster Name=instance-state-name,Values=running --output text)
+              fi
+              done 
+              
+              until KubernetesWorker1PrivateIP=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PrivateIpAddress]" --filters Name=tag:Name,Values=KubernetesWorker1 Name=instance-state-name,Values=running --output text); do
+              if [  -z $KubernetesWorker1PrivateIP  ]; then
+                sudo /usr/local/bin/aws configure set region us-east-1
+                KubernetesWorker1PrivateIP=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PrivateIpAddress]" --filters Name=tag:Name,Values=KubernetesWorker1 Name=instance-state-name,Values=running --output text)
+              fi
+              done
+              
+               until KubernetesWorker2PrivateIP=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PrivateIpAddress]" --filters Name=tag:Name,Values=KubernetesWorker2 Name=instance-state-name,Values=running --output text); do
+              if [  -z $KubernetesWorker2PrivateIP  ]; then
+                sudo /usr/local/bin/aws configure set region us-east-1
+                KubernetesWorker2PrivateIP=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PrivateIpAddress]" --filters Name=tag:Name,Values=KubernetesWorker2 Name=instance-state-name,Values=running --output text)
+              fi
+              done
+              
+              # Copy registry trust certificate on all nodes              
+              until sudo scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "/home/admin/.sshkey" /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/ca.crt admin@$KubernetesMasterPrivateIP:/home/admin; do
+              if [ $? -ne 0 ]; then
+                sleep 2
+              fi
+              done
+              
+              until sudo scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "/home/admin/.sshkey" /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/ca.crt admin@$KubernetesWorker1PrivateIP:/home/admin; do
+              if [ $? -ne 0 ]; then
+                sleep 2
+              fi
+              done
+   
+              until sudo scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "/home/admin/.sshkey" /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/ca.crt admin@$KubernetesWorker2PrivateIP:/home/admin; do
+              if [ $? -ne 0 ]; then
+                sleep 2
+              fi
+              done
+  
+              # Disable ssh timer
+              sudo sed -i 's/ClientAliveInterval 420/#ClientAliveInterval 420/g;s/ClientAliveInterval 120/#ClientAliveInterval 120/g;' /etc/ssh/sshd_config 
+              sudo echo 'ClientAliveInterval 4' >> /etc/ssh/sshd_config
+              sudo echo 'ClientAliveCountMax 22' >> /etc/ssh/sshd_config
+              sudo systemctl restart sshd
+          
+              # Setting vim editor
+              sed -i 's/if has('mouse')/"if has('mouse')/g;s/set mouse=a/"set mouse=a/g;' /usr/share/vim/vim80/defaults.vim
+              
+  ElasticIPGitLabServer:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'EIP GitLabServer'
+  ElasticIPAssignmentGitLabServer:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+     EIP: !Ref ElasticIPGitLabServer
+     InstanceId: !Ref GitLabServer
+              
+  InstanceSecurityGroupGitLab:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'Rules GitLabServer'
+      GroupDescription: Enable SSH access via port 22, 80, 8080, 8443 and 2222
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 8443
+        ToPort: 8443
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 2222
+        ToPort: 2222
+        CidrIp: !Ref 'SSHLocation'
+  
+  KubernetesMaster:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'KubernetesMaster'
+      InstanceType: !Ref 'InstanceTypeKubernetesMaster'
+      SecurityGroups: [!Ref 'InstanceSecurityGroupKubernetesMaster']
+      BlockDeviceMappings:
+        - DeviceName: 
+            !If [DebianImage, xvda, !If [CentosImage, /dev/sda1, ' ']]
+          Ebs:
+            VolumeSize: 20 
+            DeleteOnTermination: true
+      KeyName: !Ref 'KeyName'
+      IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance
+      ImageId:
+        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0083662ba17882949', ' ']]        
+      UserData:
+        'Fn::Base64':
+          !Sub |
+            #!/bin/bash
+            #Based packages installation 
+            echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
+            apt-get update
+            apt-get -y install dirmngr --install-recommends
+            apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+            sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian stretch stable"
+            sudo apt-get update
+            sudo apt-get -y install snapd
+            sudo snap install core
+            sudo snap install fluxctl --classic
+            export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin
+            sudo su
+            sudo apt-get -y install snapd
+            
+            # Setting hostname
+            sudo hostnamectl set-hostname master
+            sudo sed -i 's/127.0.0.1 localhost/127.0.0.1 localhost master/g;' /etc/hosts
+            
+            # Docker installation
+            sudo apt-get install -y docker-ce  docker-ce-cli containerd.io
+            sudo usermod -a -G docker admin
+            
+            # AWSCLI 2.x.x installation 
+            sudo apt-get install unzip -y
+            sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            sudo unzip awscliv2.zip
+            sudo ./aws/install
+             
+            # Kubernetes installation
+            cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+            net.bridge.bridge-nf-call-ip6tables = 1
+            net.bridge.bridge-nf-call-iptables = 1 
+            EOF
+            sudo sysctl --system
+            sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+            sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+            cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+            deb https://apt.kubernetes.io/ kubernetes-xenial main
+            EOF
+            sudo apt-get update
+            sudo apt-get install -y kubelet kubeadm kubectl
+            sudo apt-mark hold kubelet kubeadm kubectl
+            sudo systemctl daemon-reload
+            sudo systemctl restart kubelet
+            
+            # Kubernetes cluster initialisation 
+            sudo kubeadm init
+            sudo mkdir -p /root/.kube
+            sudo cp -i /etc/kubernetes/admin.conf /root/.kube/config
+            sudo chown $(id -u):$(id -g) /root/.kube/config
+            
+            # Generate command for worker nodes 
+            sudo kubeadm token create --print-join-command > /home/admin/join-cluster-command
+            
+            # Deploy weave network
+            sudo kubectl apply -f "https://cloud.weave.works/k8s/net?k8s-version=$(kubectl version | base64 | tr -d '\n')"
+            
+            # Enable autocompletion for kubectl 
+            sudo echo 'source <(kubectl completion bash)' >> /root/.bashrc && source /root/.bashrc 
+            sudo echo 'source <(kubectl completion bash)' >> /home/admin/.bashrc && source /home/admin/.bashrc
+            
+             # Retrieve private key AWS and setting permission
+             sudo echo ${PrivateKey} > /home/admin/sshkey
+             sudo sed -i 's/-----BEGIN RSA PRIVATE KEY-----//g;s/-----END RSA PRIVATE KEY-----//g;' /home/admin/sshkey
+             sudo cat /home/admin/sshkey | tr ' ' '\n' > /home/admin/ssh
+             sudo echo "-----BEGIN RSA PRIVATE KEY-----" > /home/admin/.sshkey
+             sudo sed '/^$/d' /home/admin/ssh >> /home/admin/.sshkey
+             sudo echo "-----END RSA PRIVATE KEY-----" >> /home/admin/.sshkey
+             sudo chmod 400 /home/admin/.sshkey
+             sudo rm -fr /home/admin/sshkey 
+             sudo rm -fr /home/admin/ssh
+                          
+            # Copy kuberntes join command on worker nodes 
+            sudo scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "/home/admin/.sshkey" /home/admin/join-cluster-command admin@${KubernetesWorker1.PrivateIp}:/home/admin
+            sudo scp -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "/home/admin/.sshkey" /home/admin/join-cluster-command admin@${KubernetesWorker2.PrivateIp}:/home/admin
+            
+            # Desactivate ssh timer
+            sudo sed -i 's/ClientAliveInterval 420/#ClientAliveInterval 420/g;s/ClientAliveInterval 120/#ClientAliveInterval 120/g;' /etc/ssh/sshd_config 
+            sudo echo 'ClientAliveInterval 4' >> /etc/ssh/sshd_config
+            sudo echo 'ClientAliveCountMax 22' >> /etc/ssh/sshd_config
+            sudo systemctl restart sshd
+          
+            # Setting vim editor
+            sudo sed -i 's/if has('mouse')/"if has('mouse')/g;s/set mouse=a/"set mouse=a/g;' /usr/share/vim/vim80/defaults.vim
+            
+            # Get Pubic DNS Name of intanvce Gitlab
+            GitlabPublicDnsName=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PublicDnsName]" --filters Name=tag:Name,Values=GitLabServer Name=instance-state-name,Values=running --output text)
+            
+            # Move certificate file in appropriate folder
+            sudo mkdir -p /etc/docker/certs.d/$GitlabPublicDnsName
+            while [ ! -f /home/admin/ca.crt ]; do sleep 2 ; done
+            sudo mv /home/admin/ca.crt /etc/docker/certs.d/$GitlabPublicDnsName
+
+  ElasticIPKubernetesMaster:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'EIP KubernetesMaster'
+  ElasticIPAssignmentKubernetesMaster:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+     EIP: !Ref ElasticIPKubernetesMaster
+     InstanceId: !Ref KubernetesMaster
+            
+  InstanceSecurityGroupKubernetesMaster:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'Security Rules for Kubernetes Master'
+      GroupDescription: Kubernetes Master 
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 6443
+        ToPort: 6443
+        CidrIp: !Ref 'SSHLocation' 
+      - IpProtocol: tcp
+        FromPort: 2379
+        ToPort: 2380
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 10250
+        ToPort: 10252
+        CidrIp: !Ref 'SSHLocation' 
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 6781
+        ToPort: 6784
+        CidrIp: !Ref 'SSHLocation' 
+      - IpProtocol: udp
+        FromPort: 6783
+        ToPort: 6784
+        CidrIp: !Ref 'SSHLocation'     
+
+  KubernetesWorker1:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'KubernetesWorker1'
+      InstanceType: !Ref 'InstanceTypeKubernetesWorker'
+      SecurityGroups: [!Ref 'InstanceSecurityGroupKubernetesWorker']
+      BlockDeviceMappings:
+        - DeviceName: 
+            !If [DebianImage, xvda, !If [CentosImage, /dev/sda1, ' ']]
+          Ebs:
+            VolumeSize: 20 
+            DeleteOnTermination: true
+      KeyName: !Ref 'KeyName'
+      IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance
+      ImageId:
+        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0083662ba17882949', ' ']] 
+      UserData:
+        'Fn::Base64':
+          !Sub |
+            #!/bin/bash
+            #Based packages installation 
+            echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
+            apt-get update
+            apt-get -y install dirmngr --install-recommends
+            apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+            sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian stretch stable"
+            sudo apt-get update
+            
+            # Setting hostname
+            sudo hostnamectl set-hostname worker1
+            sudo sed -i 's/127.0.0.1 localhost/127.0.0.1 localhost worker1/g;' /etc/hosts
+            
+            # Docker installation
+            sudo apt-get install -y docker-ce  docker-ce-cli containerd.io
+            sudo usermod -a -G docker admin
+            
+            # AWSCLI 2.x.x installation 
+            sudo apt-get install unzip -y
+            sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            sudo unzip awscliv2.zip
+            sudo ./aws/install
+            
+            # Kubernetes installation
+            cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+            net.bridge.bridge-nf-call-ip6tables = 1
+            net.bridge.bridge-nf-call-iptables = 1 
+            EOF
+            sudo sysctl --system
+            sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+            sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+            cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+            deb https://apt.kubernetes.io/ kubernetes-xenial main
+            EOF
+            sudo apt-get update
+            sudo apt-get install -y kubelet kubeadm kubectl
+            sudo apt-mark hold kubelet kubeadm kubectl
+            sudo systemctl daemon-reload
+            sudo systemctl restart kubelet
+            
+            # Enable autocompletion for kubectl 
+            sudo echo 'source <(kubectl completion bash)' >> /root/.bashrc && source /root/.bashrc 
+            sudo echo 'source <(kubectl completion bash)' >> /home/admin/.bashrc && source /home/admin/.bashrc
+            
+            # Desactivate ssh timer
+            sudo sed -i 's/ClientAliveInterval 420/#ClientAliveInterval 420/g;s/ClientAliveInterval 120/#ClientAliveInterval 120/g;' /etc/ssh/sshd_config 
+            sudo echo 'ClientAliveInterval 4' >> /etc/ssh/sshd_config
+            sudo echo 'ClientAliveCountMax 22' >> /etc/ssh/sshd_config
+            sudo systemctl restart sshd
+          
+            # Setting vim editor
+            sudo sed -i 's/if has('mouse')/"if has('mouse')/g;s/set mouse=a/"set mouse=a/g;' /usr/share/vim/vim80/defaults.vim
+            
+            # Join Kuberneter cluster
+            while [ ! -f /home/admin/join-cluster-command ]; do sleep 2 ; done
+            JOINCLUSTERCOMMAND=$(cat /home/admin/join-cluster-command)
+            sudo $JOINCLUSTERCOMMAND
+            
+            # Get Pubic DNS Name of intanvce Gitlab
+            sudo /usr/local/bin/aws configure set region us-east-1
+            GitlabPublicDnsName=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PublicDnsName]" --filters Name=tag:Name,Values=GitLabServer Name=instance-state-name,Values=running --output text)
+            
+            # Move certificate file in appropriate folder
+            sudo mkdir -p /etc/docker/certs.d/$GitlabPublicDnsName
+            while [ ! -f /home/admin/ca.crt ]; do sleep 2 ; done
+            sudo mv /home/admin/ca.crt /etc/docker/certs.d/$GitlabPublicDnsName
+
+  ElasticIPKubernetesWorker1:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'EIP KubernetesWorker1'
+  ElasticIPAssignmentKubernetesWorker1:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+     EIP: !Ref ElasticIPKubernetesWorker1
+     InstanceId: !Ref KubernetesWorker1
+            
+  KubernetesWorker2:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'KubernetesWorker2'
+      InstanceType: !Ref 'InstanceTypeKubernetesWorker'
+      SecurityGroups: [!Ref 'InstanceSecurityGroupKubernetesWorker']
+      BlockDeviceMappings:
+        - DeviceName: 
+            !If [DebianImage, xvda, !If [CentosImage, /dev/sda1, ' ']]
+          Ebs:
+            VolumeSize: 20 
+            DeleteOnTermination: true
+      KeyName: !Ref 'KeyName'
+      IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance
+      ImageId:
+        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0083662ba17882949', ' ']] 
+      UserData:
+        'Fn::Base64':
+          !Sub |
+            #!/bin/bash
+            #Based packages installation 
+            echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
+            apt-get update
+            apt-get -y install dirmngr --install-recommends
+            apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
+            sudo apt-get -y install apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+            sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+            sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian stretch stable"
+            sudo apt-get update
+            
+            # Setting hostname
+            sudo hostnamectl set-hostname worker2
+            sudo sed -i 's/127.0.0.1 localhost/127.0.0.1 localhost worker2/g;' /etc/hosts
+            
+            # Docker installation
+            sudo apt-get install -y docker-ce  docker-ce-cli containerd.io
+            sudo usermod -a -G docker admin
+            
+            # AWSCLI 2.x.x installation 
+            sudo apt-get install unzip -y
+            sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            sudo unzip awscliv2.zip
+            sudo ./aws/install
+            
+            # Kubernetes installation
+            cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+            net.bridge.bridge-nf-call-ip6tables = 1
+            net.bridge.bridge-nf-call-iptables = 1 
+            EOF
+            sudo sysctl --system
+            sudo apt-get update && sudo apt-get install -y apt-transport-https curl
+            sudo curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add -
+            cat <<EOF | sudo tee /etc/apt/sources.list.d/kubernetes.list
+            deb https://apt.kubernetes.io/ kubernetes-xenial main
+            EOF
+            sudo apt-get update
+            sudo apt-get install -y kubelet kubeadm kubectl
+            sudo apt-mark hold kubelet kubeadm kubectl
+            sudo systemctl daemon-reload
+            sudo systemctl restart kubelet
+            
+            # Enable autocompletion for kubectl 
+            sudo echo 'source <(kubectl completion bash)' >> /root/.bashrc && source /root/.bashrc 
+            sudo echo 'source <(kubectl completion bash)' >> /home/admin/.bashrc && source /home/admin/.bashrc
+            
+            # Desactivate ssh timer
+            sudo sed -i 's/ClientAliveInterval 420/#ClientAliveInterval 420/g;s/ClientAliveInterval 120/#ClientAliveInterval 120/g;' /etc/ssh/sshd_config 
+            sudo echo 'ClientAliveInterval 4' >> /etc/ssh/sshd_config
+            sudo echo 'ClientAliveCountMax 22' >> /etc/ssh/sshd_config
+            sudo systemctl restart sshd
+          
+            # Setting vim editor
+            sudo sed -i 's/if has('mouse')/"if has('mouse')/g;s/set mouse=a/"set mouse=a/g;' /usr/share/vim/vim80/defaults.vim
+            
+            # Join Kuberneter cluster
+            while [ ! -f /home/admin/join-cluster-command ]; do sleep 2 ; done
+            JOINCLUSTERCOMMAND=$(cat /home/admin/join-cluster-command)
+            sudo $JOINCLUSTERCOMMAND
+            
+            # Get Pubic DNS Name of intanvce Gitlab
+            sudo /usr/local/bin/aws configure set region us-east-1
+            GitlabPublicDnsName=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PublicDnsName]" --filters Name=tag:Name,Values=GitLabServer Name=instance-state-name,Values=running --output text)
+            
+            # Move certificate file in appropriate folder
+            sudo mkdir -p /etc/docker/certs.d/$GitlabPublicDnsName
+            while [ ! -f /home/admin/ca.crt ]; do sleep 2 ; done
+            sudo mv /home/admin/ca.crt /etc/docker/certs.d/$GitlabPublicDnsName
+
+  ElasticIPKubernetesWorker2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'EIP KubernetesWorker2'
+  ElasticIPAssignmentKubernetesWorker2:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+     EIP: !Ref ElasticIPKubernetesWorker2
+     InstanceId: !Ref KubernetesWorker2
+
+  InstanceSecurityGroupKubernetesWorker:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      Tags:
+       - Key: Name
+         Value: 'Security Rules for Kubernetes Worker'
+      GroupDescription: Kubernetes workers
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 3030
+        ToPort: 3031
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 6781
+        ToPort: 6784
+        CidrIp: !Ref 'SSHLocation' 
+      - IpProtocol: tcp
+        FromPort: 10250
+        ToPort: 10250
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 11211
+        ToPort: 11211
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 30000
+        ToPort: 32767
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: udp
+        FromPort: 6783
+        ToPort: 6784
+        CidrIp: !Ref 'SSHLocation'     
+
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref 'GitLabServer'
+    Value: !Ref 'KubernetesMaster'
+    Value: !Ref 'KubernetesWorker1'
+    Value: !Ref 'KubernetesWorker2'
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt [GitLabServer, AvailabilityZone]
+    Value: !GetAtt [KubernetesMaster, AvailabilityZone]
+    Value: !GetAtt [KubernetesWorker1, AvailabilityZone]
+    Value: !GetAtt [KubernetesWorker2, AvailabilityZone]
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt [GitLabServer, PublicDnsName]
+    Value: !GetAtt [KubernetesMaster, PublicDnsName]
+    Value: !GetAtt [KubernetesWorker1, PublicDnsName]
+    Value: !GetAtt [KubernetesWorker2, PublicDnsName]
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt [GitLabServer, PublicIp]
+    Value: !GetAtt [KubernetesMaster, PublicIp]
+    Value: !GetAtt [KubernetesWorker1, PublicIp]
+    Value: !GetAtt [KubernetesWorker2, PublicIp]
