@@ -16,7 +16,7 @@ services:
   gitlab-runner-register:
     restart: "no"
     container_name: gitlab_runner_register
-    image: "gitlab/{ gitlab_runner_version }}"
+    image: "gitlab/{{ gitlab_runner_version }}"
     # Changed entrypoint to a mini bash script to ensure that multiple registrations don't happen
     # Checks if config.toml exists, which means either it was placed there as part of bootstrapping
     # or manufactured using the "gitlab-runner register" command
@@ -55,7 +55,7 @@ services:
   gitlab-runner:
     restart: always
     container_name: gitlab_runner
-    image: "gitlab/{ gitlab_runner_version }}"
+    image: "gitlab/{{ gitlab_runner_version }}"
     depends_on:
       - gitlab
       - gitlab-runner-register
