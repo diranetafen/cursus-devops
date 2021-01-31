@@ -1,0 +1,146 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: Apache-2.0
+Description: 'This Cloudformation is used by eazytraining to deploy EKS on AWS Educate platform.
+              To use k8s, you need to set kubernetes credentials, so you need to run the following command
+              only when cluster EKS is up and ready (aws cloudformation describe-stacks --region us-east-1 --stack-name EKS --query "Stacks[*].StackStatus" --output text)
+              If the status is CREATE_COMPLETE you can now get the credentials (the creation can take a couple of minutes)
+              1- set aws region : mkdir ~/.aws && echo -e "[default] \nregion = us-east-1" > ~/.aws/config
+              2- set aws credentials : aws eks --region us-east-1 update-kubeconfig --name EKS'
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  InstanceType:
+    Description: EksDeploy EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.nano, t2.micro, t2.small, t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      m5.large, m5.xlarge, m5.2xlarge, m5.4xlarge,
+      c5.large, c5.xlarge, c5.2xlarge, c5.4xlarge, c5.9xlarge,
+      g3.8xlarge,
+      r5.large, r5.xlarge, r5.2xlarge, r5.4xlarge, r3.12xlarge,
+      i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
+    ConstraintDescription: must be a valid EC2 instance type.
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+Resources:
+  eksDeployRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+  eksDeployInstanceProfile:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref eksDeployRole
+  eksDeployRolePolicies:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: ec2
+      PolicyDocument:
+        Statement:
+          - Effect: Allow
+            Action: '*'
+            Resource: '*'
+      Roles:
+        - !Ref eksDeployRole
+  EksDeployInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref 'InstanceType'
+      SecurityGroups: [!Ref 'InstanceSecurityGroup']
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 20
+      KeyName: !Ref 'KeyName'
+      ImageId: 'ami-0083662ba17882949'
+      IamInstanceProfile: !Ref eksDeployInstanceProfile
+      UserData:
+        'Fn::Base64':
+          !Sub |
+            #!/bin/bash
+
+            # Install aws cli
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            yum install -y unzip
+            unzip awscliv2.zip
+            ./aws/install
+
+            # Install aws-iam-authenticator
+            curl -o aws-iam-authenticator https://amazon-eks.s3.us-west-2.amazonaws.com/1.18.9/2020-11-02/bin/linux/amd64/aws-iam-authenticator
+            chmod +x aws-iam-authenticator
+            mv aws-iam-authenticator /usr/bin/
+
+            # Install kubectl
+            curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+            chmod +x kubectl
+            sudo mv kubectl /usr/local/bin
+
+            # Install kubectl auto-completion
+            yum install -y bash-completion
+            echo 'source <(kubectl completion bash)' >>~/.bashrc
+            kubectl completion bash >> /etc/bash_completion.d/kubectl
+
+            # Set aws-cli region
+            mkdir ~/.aws
+            echo -e "[default] \nregion = us-east-1" > ~/.aws/config
+
+            # Deploy eks stack
+             curl -o eks.yaml https://raw.githubusercontent.com/sokube/aws-eks/master/infrastructure-as-code/eks-cloudformation.yaml
+             aws cloudformation create-stack --stack-name EKS \
+             --template-body file://eks.yaml \
+             --parameters ParameterKey=AvailabilityZonePublicSubnet01,ParameterValue="us-east-1a" \
+             ParameterKey=AvailabilityZonePublicSubnet02,ParameterValue="us-east-1b" \
+             ParameterKey=EKSKeyPair,ParameterValue="devops" \
+             --capabilities CAPABILITY_NAMED_IAM
+
+
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access via port 22 and 80
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: !Ref 'SSHLocation'
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref 'EksDeployInstance'
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt [EksDeployInstance, AvailabilityZone]
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt [EksDeployInstance, PublicDnsName]
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt [EksDeployInstance, PublicIp]
