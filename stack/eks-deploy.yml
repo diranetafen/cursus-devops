@@ -6,7 +6,7 @@ Description: 'This Cloudformation is used by eazytraining to deploy EKS on AWS E
               only when cluster EKS is up and ready (aws cloudformation describe-stacks --region us-east-1 --stack-name EKS --query "Stacks[*].StackStatus" --output text)
               If the status is CREATE_COMPLETE you can now get the credentials (the creation can take a couple of minutes)
               1- set aws region : mkdir ~/.aws && echo -e "[default] \nregion = us-east-1" > ~/.aws/config
-              2- set aws credentials : aws eks --region us-east-1 update-kubeconfig --name EKS
+              2- set aws credentials : aws eks --region us-east-1 update-kubeconfig --name EKS'
 Parameters:
   KeyName:
     Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
