@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Metadata:
   License: Apache-2.0
 Description: 'This Cloudformation is used by eazytraining to deploy EKS on AWS Educate platform.
-              To use k8s, you need to set kubernetes credentials, so you need to run the following command
+              WARNING : You need to use key-pair name aws-eks to make it work, otherwise you need to change ParameterKey=EKSKeyPair,ParameterValue="aws-eks" in the userdata section
+              To use k8s, you need to set kubernetes credentials, so you need to run the following command 
               only when cluster EKS is up and ready (aws cloudformation describe-stacks --region us-east-1 --stack-name EKS --query "Stacks[*].StackStatus" --output text)
               If the status is CREATE_COMPLETE you can now get the credentials (the creation can take a couple of minutes)
               1- set aws region : mkdir ~/.aws && echo -e "[default] \nregion = us-east-1" > ~/.aws/config
@@ -113,7 +114,7 @@ Resources:
              --template-body file://eks.yaml \
              --parameters ParameterKey=AvailabilityZonePublicSubnet01,ParameterValue="us-east-1a" \
              ParameterKey=AvailabilityZonePublicSubnet02,ParameterValue="us-east-1b" \
-             ParameterKey=EKSKeyPair,ParameterValue="devops" \
+             ParameterKey=EKSKeyPair,ParameterValue="aws-eks" \
              --capabilities CAPABILITY_NAMED_IAM
 
 
