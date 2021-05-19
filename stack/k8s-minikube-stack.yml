@@ -75,7 +75,6 @@ Resources:
               sudo mv kubectl  /usr/bin/
               sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
               sudo systemctl enable docker.service
-              sudo systemctl enable kubelet.service
               
   InstanceSecurityKubernetesServer:
     Type: AWS::EC2::SecurityGroup
