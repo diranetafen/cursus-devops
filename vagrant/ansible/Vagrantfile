@@ -2,7 +2,7 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
-  config.vm.define "docker" do |ansible|
+  config.vm.define "ansible" do |ansible|
     ansible.vm.box = "geerlingguy/centos7"
     ansible.vm.network "private_network", type: "dhcp"
     ansible.vm.hostname = "ansible"
