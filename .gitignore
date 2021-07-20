@@ -7,3 +7,6 @@ terraform/.terraform/
 terraform/student-list/.terraform/
 
 .idea
+
+# Vagrant file
+.vagrant
