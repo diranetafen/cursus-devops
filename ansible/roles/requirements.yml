@@ -1,15 +1,17 @@
-# Install a role for pip 
-- src: geerlingguy.pip 
+# Install a role for pip
+- src: geerlingguy.pip
 
-# Install a role for docker 
-- src: geerlingguy.docker 
+# Install a role for docker
+- src: geerlingguy.docker
 
 # Install a role for gitlab/gitlab-runner
-- src: https://github.com/HP41/ansible-docker-gitlab.git 
+- src: https://github.com/HP41/ansible-docker-gitlab.git
 
-# install java
+# Install java
 - src: geerlingguy.java
 
-# install jenkins
+# Install jenkins
 - src: geerlingguy.jenkins
 
+# Install kubenretes
+- src: geerlingguy.kubernetes
