@@ -1,4 +1,7 @@
 # Step to use vagrant files
+
+[![Déployez vos outils DevOps grâce à Vagrant](https://eazytraining.fr/wp-content/uploads/2021/07/vagrant-stack-eazytraining.png)](https://youtu.be/Z-Q62_OUqT4 "Déployez vos outils DevOps grâce à Vagrant")
+
 ## 1- Choose the tool you want to start and go to the corresponding folder
 example : cd vagrant/jenkins
 ## 2- Install vagrant and virtualbox
