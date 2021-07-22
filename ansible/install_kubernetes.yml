@@ -1,0 +1,43 @@
+- hosts: localhost
+  become: true
+
+  vars:
+    pip_install_packages:
+      - name: docker
+    token: "783bde.3f89s0fje9f38fhf"
+    # The follow two parameter was explained here https://github.com/geerlingguy/ansible-role-kubernetes#variables-to-configure-kubeadm-and-kubelet-through-command-line-options
+    kubernetes_kubelet_extra_args: "--fail-swap-on=false"
+    kubernetes_pod_network:
+      cni: 'weave'
+      cidr: '10.32.0.0/12'
+    kubernetes_config_init_configuration:
+      # details of these parameters could be found here https://pkg.go.dev/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1
+      localAPIEndpoint:
+        advertiseAddress: "{{ kubernetes_apiserver_advertise_address | default(ansible_default_ipv4.address, true) }}"
+      bootstrapTokens:
+        - token: "{{ token }}"
+          description: "another bootstrap token"
+          usages:
+          - authentication
+          - signing
+          groups:
+          - system:bootstrappers:kubeadm:default-node-token
+    kubernetes_allow_pods_on_master: true
+  pre_tasks:
+  - name: update all packages
+    yum:
+      name: '*'
+      update_only: yes
+      update_cache: yes
+      state: latest
+
+  - name: Install epel release
+    yum:
+      name: epel-release
+      state: installed
+
+
+  roles:
+    - role: geerlingguy.pip
+    - role: geerlingguy.docker
+    - role: geerlingguy.kubernetes
