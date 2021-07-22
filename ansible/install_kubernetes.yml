@@ -4,10 +4,10 @@
   vars:
     pip_install_packages:
       - name: docker
-    kubernetes_apiserver_advertise_address: "192.168.99.10"
+    #kubernetes_apiserver_advertise_address: "192.168.99.10"
     token: "783bde.3f89s0fje9f38fhf"
     # The follow two parameter was explained here https://github.com/geerlingguy/ansible-role-kubernetes#variables-to-configure-kubeadm-and-kubelet-through-command-line-options
-    kubernetes_join_command: "kubeadm join {{ kubernetes_apiserver_advertise_address }}:6443 --ignore-preflight-errors=all --token={{ token }}  --discovery-token-unsafe-skip-ca-verification"
+    #kubernetes_join_command: "kubeadm join {{ kubernetes_apiserver_advertise_address }}:6443 --ignore-preflight-errors=all --token={{ token }}  --discovery-token-unsafe-skip-ca-verification"
     kubernetes_kubelet_extra_args: "--fail-swap-on=false"
     kubernetes_pod_network:
       cni: 'weave'

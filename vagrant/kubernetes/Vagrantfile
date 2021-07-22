@@ -13,7 +13,7 @@ Vagrant.configure("2") do |config|
     end
     master.vm.provision :shell do |shell|
       shell.path = "install_kubernetes.sh"
-      shell.args = "master"
+      shell.args = ["master", "192.168.99.10"]
     end
   end
   config.vm.define "worker" do |worker|
@@ -27,7 +27,7 @@ Vagrant.configure("2") do |config|
     end
     worker.vm.provision :shell do |shell|
       shell.path = "install_kubernetes.sh"
-      shell.args = "node"
+      shell.args = ["node", "192.168.99.10"]
     end
   end
 end
