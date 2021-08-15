@@ -75,7 +75,7 @@ Resources:
           Ebs:
             VolumeSize: 20
       KeyName: !Ref 'KeyName'
-      ImageId: 'ami-0083662ba17882949'
+      ImageId: 'ami-0057d8e6fb0692b80'
       IamInstanceProfile: !Ref ec2InstanceProfile
       UserData:
         'Fn::Base64':
