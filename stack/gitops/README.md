@@ -135,7 +135,7 @@ https://github.com/samiamoura/gitops-training/blob/master/aws-educate-stack/stac
 #### ImageType correspond OS type of EC2 Instances, two types are allowed
 
 - Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd
-- CentOS Linux 7 (Core) - ami-0083662ba17882949
+- CentOS Linux 7 (Core) - ami-0057d8e6fb0692b80
 
 In this tutorial we use **Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd** 
 

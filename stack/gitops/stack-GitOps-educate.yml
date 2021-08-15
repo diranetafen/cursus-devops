@@ -80,12 +80,12 @@ Parameters:
     Type: String
     AllowedValues: 
       - "Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd"
-      - "CentOS Linux 7 (Core) - ami-0083662ba17882949"
+      - "CentOS Linux 7 (Core) - ami-0057d8e6fb0692b80"
     ConstraintDescription: must specify debian or centos
     
 Conditions:
   DebianImage: !Equals [!Ref ImageType, "Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd"]
-  CentosImage: !Equals [!Ref ImageType, "CentOS Linux 7 (Core) - ami-0083662ba17882949"]
+  CentosImage: !Equals [!Ref ImageType, "CentOS Linux 7 (Core) - ami-0057d8e6fb0692b80"]
   
 Resources:
   ec2RoleDescribeInstance:
@@ -136,7 +136,7 @@ Resources:
             VolumeSize: 20 
             DeleteOnTermination: true     
       ImageId:
-        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0083662ba17882949', ' ']]
+        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0057d8e6fb0692b80', ' ']]
       IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance      
       KeyName: !Ref 'KeyName'
       UserData:
@@ -311,7 +311,7 @@ Resources:
       KeyName: !Ref 'KeyName'
       IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance
       ImageId:
-        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0083662ba17882949', ' ']]        
+        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0057d8e6fb0692b80', ' ']]        
       UserData:
         'Fn::Base64':
           !Sub |
@@ -477,7 +477,7 @@ Resources:
       KeyName: !Ref 'KeyName'
       IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance
       ImageId:
-        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0083662ba17882949', ' ']] 
+        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0057d8e6fb0692b80', ' ']] 
       UserData:
         'Fn::Base64':
           !Sub |
@@ -579,7 +579,7 @@ Resources:
       KeyName: !Ref 'KeyName'
       IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance
       ImageId:
-        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0083662ba17882949', ' ']] 
+        !If [DebianImage, 'ami-003f19e0e687de1cd', !If [CentosImage, 'ami-0057d8e6fb0692b80', ' ']] 
       UserData:
         'Fn::Base64':
           !Sub |
