@@ -1,5 +1,7 @@
-
 #!/bin/bash
+echo "###################################################"
+echo "Install Puppet requirements"
+echo "###################################################"
 yum -y update
 yum -y install epel-release
 yum install -y https://yum.puppet.com/puppet-release-el-8.noarch.rpm
