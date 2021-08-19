@@ -11,7 +11,7 @@ then
         echo "Start Master Puppet Installation"
         echo "###################################################"
         yum install -y puppetserver
-        echo "127.0.1.1 puppet puppetdb puppet.home" >> /etc/hosts
+        echo "127.0.2.1 puppet puppetdb puppet.home" >> /etc/hosts
         systemctl enable --now puppetserver puppet
         systemctl enable --now firewalld
         firewall-cmd --zone=public --permanent --add-service=http --add-service=https --add-service=ssh
