@@ -18,4 +18,4 @@ sudo mv kubectl  /usr/bin/
 sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 sudo systemctl enable docker.service
 echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
-echo "Connect through ssh on the VM and then run 'minikube start --driver=none'"
+echo "Connect through ssh on the VM and then run 'minikube start --driver=none' please don't run the command as root user or using any sudo command, use vagrant user"
