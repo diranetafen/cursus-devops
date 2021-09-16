@@ -2,14 +2,12 @@
 #!/bin/bash
 yum -y update
 yum -y install epel-release
+yum install -y python3
+if [ $1 == "master" ]
+then
 
-# install ansible
-yum -y install ansible
-# retrieve ansible code
-yum -y install git
-git clone https://github.com/diranetafen/cursus-devops.git
-cd cursus-devops/ansible
-ansible-galaxy install -r roles/requirements.yml
-ansible-playbook install_docker.yml
-sudo usermod -aG docker vagrant
+  # install ansible
+  curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3
+  pip3 install ansible
+fi
 echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
