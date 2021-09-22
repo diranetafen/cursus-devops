@@ -8,6 +8,6 @@ then
 
   # install ansible
   curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3
-  pip3 install ansible
+  /usr/local/bin/pip3 install ansible
 fi
 echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
