@@ -7,7 +7,7 @@ if [ $1 == "master" ]
 then
 
   # install ansible
-  curl -sS https://bootstrap.pypa.io/get-pip.py | sudo python3
+  curl -sS https://bootstrap.pypa.io/pip/3.6/get-pip.py | sudo python3
   /usr/local/bin/pip3 install ansible
   yum install -y sshpass
 fi
