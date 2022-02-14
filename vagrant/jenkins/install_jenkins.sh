@@ -16,3 +16,4 @@ cd ../jenkins
 /usr/local/bin/docker-compose up -d
 echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
 echo "login : user and password : bitnami"
+echo "Default jenkins admin password : $(docker exec $(docker ps -a | grep jenkins | awk '{print $1}') bash -c "cat /var/jenkins_home/secrets/initialAdminPassword")"
