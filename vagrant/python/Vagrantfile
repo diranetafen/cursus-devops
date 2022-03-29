@@ -8,7 +8,7 @@ Vagrant.configure("2") do |config|
     python.vm.hostname = "python"
     python.vm.provider "virtualbox" do |v|
       v.name = "python"
-      v.memory = 2048
+      v.memory = 4096
       v.cpus = 2
     end
     python.vm.provision :shell do |shell|
