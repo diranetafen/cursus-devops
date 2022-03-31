@@ -2,6 +2,7 @@
 sudo yum -y update
 
 # install docker
+sudo yum install -y git
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
 sudo usermod -aG docker vagrant
