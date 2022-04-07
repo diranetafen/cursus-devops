@@ -1,0 +1,18 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    config.vm.define "java" do |java|
+      java.vm.box = "geerlingguy/centos7"
+      java.vm.network "private_network", type: "dhcp"
+      java.vm.hostname = "java"
+      java.vm.provider "virtualbox" do |v|
+        v.name = "java"
+        v.memory = 16384
+        v.cpus = 4
+      end
+      java .vm.provision :shell do |shell|
+        shell.path = "install_java.sh"
+      end
+    end
+  end
