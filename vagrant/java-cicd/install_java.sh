@@ -19,7 +19,7 @@ yum install wget -y
 wget https://downloads.apache.org/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.tar.gz 
 tar -xvf apache-maven-3.8.5-bin.tar.gz 
 mv apache-maven-3.8.5 /usr/local/maven/
-echo -e "# Apache Maven Environment Variables\n# MAVEN_HOME for Maven 1 - M2_HOME for Maven 2\nexport M2_HOME=/usr/local/maven\nexport PATH=${M2_HOME}/bin:${PATH}" > /etc/profile.d/maven.sh
+echo -e "# Apache Maven Environment Variables\n# MAVEN_HOME for Maven 1 - M2_HOME for Maven 2\nexport M2_HOME=/usr/local/maven\nexport PATH=\${M2_HOME}/bin:\${PATH}" > /etc/profile.d/maven.sh
 chmod +x /etc/profile.d/maven.sh
 source /etc/profile.d/maven.sh
 
