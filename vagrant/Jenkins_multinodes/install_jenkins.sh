@@ -35,7 +35,6 @@ function waitforssh {
         echo -e "SSH server not started on \$1 host. Trying again later in 5 seconds..."
         sshpass -p vagrant ssh -o StrictHostKeyChecking=no vagrant@\$1 echo ssh is up on \$1
     done
-
 }
 
 i=1 
@@ -55,6 +54,7 @@ then
     while [ \$i -le \${NOMBRE_WORKER} ]
     do
         waitforssh worker\${i}
+        sshpass -p vagrant ssh -o StrictHostKeyChecking=no vagrant@worker\${i}  "sudo su -c \" useradd -d \${JENKINS_HOME} jenkins && mkdir -p \${JENKINS_HOME}/.ssh && touch \${JENKINS_HOME}/.ssh/authorized_keys && chown -R jenkins:jenkins \${JENKINS_HOME}/.ssh/ \""
         cat \${JENKINS_HOME}/.ssh/id_rsa.pub |  sshpass -p vagrant ssh -o StrictHostKeyChecking=no vagrant@worker\${i}  "sudo su -c \"cat >>  ~jenkins/.ssh/authorized_keys\""
         let i=i+1
     done
@@ -65,10 +65,7 @@ fi
 
 if [ \$1 == "worker" ]
 then 
-    useradd -d \${JENKINS_HOME} jenkins
-    mkdir -p \${JENKINS_HOME}/.ssh
-    touch \${JENKINS_HOME}/.ssh/authorized_keys
-    chown -R jenkins:jenkins \${JENKINS_HOME}/.ssh/
+    echo -e "Nothing to do, it is a worker node"
 fi
 EOF
 chmod +x /root/install_jenkins.sh
