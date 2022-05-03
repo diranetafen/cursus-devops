@@ -10,6 +10,8 @@
     kubernetes_pod_network:
       cni: 'weave'
       cidr: '10.32.0.0/12'
+    kubernetes_yum_gpg_check: false
+    kubernetes_yum_repo_gpg_check: false
     kubernetes_config_init_configuration:
       # details of these parameters could be found here https://pkg.go.dev/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1
       localAPIEndpoint:
