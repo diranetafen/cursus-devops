@@ -109,7 +109,7 @@ Resources:
             echo -e "[default] \nregion = us-east-1" > ~/.aws/config
 
             # Deploy eks stack
-             curl -o eks.yaml https://raw.githubusercontent.com/sokube/aws-eks/master/infrastructure-as-code/eks-cloudformation.yaml
+             curl -o eks.yaml https://raw.githubusercontent.com/diranetafen/cursus-devops/master/stack/eks-cloudformation.yaml
              aws cloudformation create-stack --stack-name EKS \
              --template-body file://eks.yaml \
              --parameters ParameterKey=AvailabilityZonePublicSubnet01,ParameterValue="us-east-1a" \
