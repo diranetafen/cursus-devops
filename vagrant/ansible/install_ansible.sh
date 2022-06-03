@@ -12,7 +12,7 @@ then
   yum install -y sshpass
   
   # Install zsh if needed
-  if [ $ENABLE_ZSH == "true" ]
+if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
     then
       echo "We are going to install zsh"
       sudo yum -y install zsh git
@@ -22,6 +22,8 @@ then
       sed -i 's/^plugins=/#&/' /home/vagrant/.zshrc
       echo "plugins=(git  colored-man-pages aliases copyfile  copypath zsh-syntax-highlighting jsontools)" >> /home/vagrant/.zshrc
       sed -i "s/^ZSH_THEME=.*/ZSH_THEME='agnoster'/g"  /home/vagrant/.zshrc
+    else
+      echo "Provisionning not Enabled"      
   fi
 
 fi
