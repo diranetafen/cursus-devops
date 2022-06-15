@@ -1,7 +1,7 @@
 ## This stack is used for OpenShift Training
 To use this stack you must install virtualbox and vagrant and then use `vagrant up`
 
-[![Déployez OpenShift sur votre PC](https://user-images.githubusercontent.com/18481009/173793559-a4619640-4e9a-4047-b51d-11ca4b3834d6.PNG)](https://youtu.be/Z-Q62_OUqT4](https://youtu.be/25UaRP72hAk "Déployez OpenShift sur votre PC")
+[![Déployez OpenShift sur votre PC](https://user-images.githubusercontent.com/18481009/173793559-a4619640-4e9a-4047-b51d-11ca4b3834d6.PNG)](https://youtu.be/25UaRP72hAk "Déployez OpenShift sur votre PC")
 
 [minishift](https://github.com/minishift/minishift) is a lite version of openshift 3.x that enable deployment of single node deployment (all-in-one)
 After the stack end execution (the deployment may takes more than 10 minutes, so be patient), you will get the URL for OpenShift console and credentials
