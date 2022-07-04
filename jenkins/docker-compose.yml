@@ -1,11 +1,11 @@
 version: '2'
-# login: user
-# password: bitnami
+# login: eazytraining
+# password: eazytraining
 services:
   jenkins:
     # image: 'bitnami/jenkins:2'
     # image: dirane/jenkins-docker-ansible-clair
-    image: eazytraining/jenkins
+    image: eazytraining/jenkins:plugin
     restart: always
     ports:
       - '8080:8080'
