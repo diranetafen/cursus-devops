@@ -17,7 +17,7 @@ sudo chmod +x kubectl
 sudo mv kubectl  /usr/bin/
 sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 sudo systemctl enable docker.service
-su - vagrant -c "minikube start --driver=none"
+su - vagrant -c "minikube start --driver=none --kubernetes-version v1.23.0"
 yum install bash-completion -y
 echo 'source <(kubectl completion bash)' >> ~vagrant/.bashrc
 echo 'alias k=kubectl' >> ~vagrant/.bashrc
