@@ -1,0 +1,23 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+# To enable zsh, please set ENABLE_ZSH env var to "true" before launching vagrant up 
+#   + On windows => $env:ENABLE_ZSH="true"
+#   + On Linux  => export ENABLE_ZSH="true"
+
+Vagrant.configure("2") do |config|
+  config.vm.define "crc" do |crc|
+    crc.vm.box = "geerlingguy/centos7"
+    crc.vm.network "private_network", type: "dhcp"
+    crc.vm.hostname = "crc"
+    crc.vm.provider "virtualbox" do |v|
+      v.name = "crc"
+      v.memory = 12288
+      v.cpus = 6
+	  v.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
+    end
+    crc.vm.provision :shell do |shell|
+      shell.path = "install_crc.sh"
+      shell.env = { 'ENABLE_ZSH' => ENV['ENABLE_ZSH'] }
+    end
+  end
+end
