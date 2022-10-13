@@ -24,6 +24,8 @@ su - vagrant  -c  'crc start'
 # dns entry in hosts file
 # 127.0.0.1	api.crc.testing oauth-openshift.apps-crc.testing console-openshift-console.apps-crc.testing
 
+# example tutorial : https://www.server-world.info/en/note?os=CentOS_Stream_8&p=crc&f=2
+
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
 then
     echo "We are going to install zsh"
