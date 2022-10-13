@@ -14,12 +14,12 @@ su - vagrant  -c  '  curl https://eazytraining.fr/wp-content/uploads/2022/10/ope
 
 # download crc
 su - vagrant  -c  'wget https://developers.redhat.com/content-gateway/file/pub/openshift-v4/clients/crc/2.9.0/crc-linux-amd64.tar.xz'
-su - vagrant  -c  ' tar -xf crc-linux-amd64.tar.xz'
+su - vagrant  -c  'tar -xf crc-linux-amd64.tar.xz'
 su - vagrant  -c  'sudo cp ./crc-linux-2.9.0-amd64/crc /usr/bin/ && sudo chmod +x /usr/bin/crc'
-su - vagrant  -c  ' ./crc-linux-2.9.0-amd64/crc config set pull-secret-file /home/vagrant/pull-secret.txt'
-su - vagrant  -c  ' ./crc-linux-2.9.0-amd64/crc config set consent-telemetry yes'
-su - vagrant  -c  ' ./crc-linux-2.9.0-amd64/crc setup'
-su - vagrant  -c  ' ./crc-linux-2.9.0-amd64/crc start'
+su - vagrant  -c  'crc config set pull-secret-file /home/vagrant/pull-secret.txt'
+su - vagrant  -c  'crc config set consent-telemetry yes'
+su - vagrant  -c  'crc setup'
+su - vagrant  -c  'crc start'
 
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
 then
