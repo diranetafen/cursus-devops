@@ -12,7 +12,7 @@ sudo yum -y install wget
 sudo wget https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 sudo chmod +x minikube-linux-amd64
 sudo mv minikube-linux-amd64 /usr/bin/minikube
-sudo curl -LO https://storage.googleapis.com/kubernetes-release/release/`curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt`/bin/linux/amd64/kubectl
+sudo curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.23.0/bin/linux/amd64/kubectl
 sudo chmod +x kubectl
 sudo mv kubectl  /usr/bin/
 sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
