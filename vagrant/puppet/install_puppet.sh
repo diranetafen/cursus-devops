@@ -24,7 +24,7 @@ else
         echo "###################################################"
         echo "Start Agent Puppet Installation"
         echo "###################################################"
-        yum install -y puppet-agent-7.9.0-1.el8.x86_64 puppet-bolt
+        yum install -y puppet-agent-7.9.0-1.el8.x86_64 puppet-bolt-3.16.0-1.el8.x86_64
         echo "$2 puppet" >> /etc/hosts
         connection="ko"
         while [ $connection == "ko"  ]
