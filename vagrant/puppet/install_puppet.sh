@@ -10,7 +10,7 @@ then
         echo "###################################################"
         echo "Start Master Puppet Installation"
         echo "###################################################"
-        yum install -y puppetserver
+        yum install -y puppetserver-7.2.1-1.el8.noarch
         echo "127.0.2.1 puppet puppetdb puppet.home" >> /etc/hosts
         systemctl enable --now puppetserver puppet
         systemctl enable --now firewalld
@@ -24,7 +24,7 @@ else
         echo "###################################################"
         echo "Start Agent Puppet Installation"
         echo "###################################################"
-        yum install -y puppet puppet-bolt
+        yum install -y puppet-agent-7.9.0-1.el8.x86_64 puppet-bolt
         echo "$2 puppet" >> /etc/hosts
         connection="ko"
         while [ $connection == "ko"  ]
