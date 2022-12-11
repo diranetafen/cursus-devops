@@ -1,0 +1,39 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+# To enable zsh, please set ENABLE_ZSH env var to "true" before launching vagrant up 
+#   + On windows => $env:ENABLE_ZSH="true"
+#   + On Linux  => export ENABLE_ZSH="true"
+
+
+Vagrant.configure("2") do |config|
+  config.vm.define "haproxy" do |haproxy|
+    haproxy.vm.box = "geerlingguy/centos7"
+    haproxy.vm.network "private_network", type: "static", ip: "192.168.99.10"
+    haproxy.vm.hostname = "haproxy"
+    haproxy.vm.provider "virtualbox" do |v|
+      v.name = "haproxy"
+      v.memory = 2048
+      v.cpus = 2
+    end
+    haproxy.vm.provision :shell do |shell|
+      shell.path = "install_haproxy-squid.sh"
+      shell.args = ["haproxy"]
+    end
+  end
+
+    config.vm.define "squid" do |squid|
+      squid.vm.box = "geerlingguy/centos7"
+      squid.vm.network "private_network", type: "static", ip: "192.168.99.11"
+      squid.vm.hostname = "squid"
+      squid.vm.provider "virtualbox" do |v|
+        v.name = "squid"
+        v.memory = 2048
+        v.cpus = 2
+      end
+      squid.vm.provision :shell do |shell|
+        shell.path = "install_haproxy-squid.sh"
+        shell.args = ["squid"]
+      end
+    end
+end
+
