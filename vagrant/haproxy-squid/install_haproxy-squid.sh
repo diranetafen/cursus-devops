@@ -22,13 +22,32 @@ then
         echo "       Let's go to install HAProxy programm        "
         echo "###################################################"
         sudo yum install haproxy -y
+        sudo sed -i s/5000/50000/g /etc/haproxy/haproxy.cfg
         sudo systemctl enable --now haproxy
+        sudo systemctl restart haproxy
+        echo "###################################################"
+        echo "           Install backend applications            "
+        echo "###################################################"
+        docker run -d --name red -p 8080:8080 -e APP_COLOR=red kodekloud/webapp-color
+        docker run -d --name blue -p 8081:8080 -e APP_COLOR=blue kodekloud/webapp-color
+        git clone https://github.com/ulrichmonji/haproxy-training.git
+        cd haproxy-training
+        docker build -t site1  ./site1/
+        docker run -d --name site1 -p 81:80 site1
+        docker build -t site2 ./site2/
+        docker run -d --name site2 -p 82:80 site2
+        docker build -t student-list ./student-list/simple_api/
+        docker network create student-list
+        docker run -d --network student-list --name api -v $PWD/student-list/simple_api/student_age.json:/data/student_age.json -p 5000:5000 student-list
+        docker run -d --network student-list -p 83:80 -v $PWD/student-list/website:/var/www/html -e USERNAME=toto -e PASSWORD=python --name ihm-api php:apache
+        echo "192.168.99.10 myproxy.eazytraining.com" >> /etc/hosts        
 
 else
         echo "###################################################"
         echo "       Let's go to install Squid programm          "
         echo "###################################################"
         sudo yum install squid -y
+
 fi
 
 
