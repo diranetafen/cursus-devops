@@ -18,15 +18,15 @@ sudo chmod +x /usr/local/bin/docker-compose
 
 if [ $1 == "haproxy" ]
 then
+        #echo "###################################################"
+        #echo "       Let's go to install HAProxy programm        "
+        #echo "###################################################"
+        #sudo yum install haproxy -y
+        #sudo sed -i s/5000/50000/g /etc/haproxy/haproxy.cfg
+        #sudo systemctl enable --now haproxy
+        #sudo systemctl restart haproxy
         echo "###################################################"
-        echo "       Let's go to install HAProxy programm        "
-        echo "###################################################"
-        sudo yum install haproxy -y
-        sudo sed -i s/5000/50000/g /etc/haproxy/haproxy.cfg
-        sudo systemctl enable --now haproxy
-        sudo systemctl restart haproxy
-        echo "###################################################"
-        echo "           Install backend applications            "
+        echo "     Install backend applications for HAProxy      "
         echo "###################################################"
         docker run -d --name red -p 8080:8080 -e APP_COLOR=red kodekloud/webapp-color
         docker run -d --name blue -p 8081:8080 -e APP_COLOR=blue kodekloud/webapp-color
