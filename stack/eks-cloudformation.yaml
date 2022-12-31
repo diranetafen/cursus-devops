@@ -9,12 +9,12 @@
     
     EKSVersion:
       Type: String
-      Default: 1.19
+      Default: 1.20
       AllowedValues: 
-        - 1.16
-        - 1.17
-        - 1.18
-        - 1.19
+        - 1.20
+        - 1.21
+        - 1.22
+        - 1.23
       Description: The desired version of your AWS EKS Cluster.
     
     EKSNodeGroupName:
