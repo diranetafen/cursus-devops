@@ -21,16 +21,16 @@ then
         #echo "###################################################"
         #echo "       Let's go to install HAProxy programm        "
         #echo "###################################################"
-        #sudo yum install haproxy -y
-        #sudo sed -i s/5000/50000/g /etc/haproxy/haproxy.cfg
-        #sudo systemctl enable --now haproxy
-        #sudo systemctl restart haproxy
+        sudo yum install haproxy -y
+        sudo sed -i s/5000/50000/g /etc/haproxy/haproxy.cfg
+        sudo systemctl enable --now haproxy
+        sudo systemctl restart haproxy
         echo "###################################################"
         echo "     Install backend applications for HAProxy      "
         echo "###################################################"
         docker run -d --name red -p 8080:8080 -e APP_COLOR=red kodekloud/webapp-color
         docker run -d --name blue -p 8081:8080 -e APP_COLOR=blue kodekloud/webapp-color
-        git clone https://github.com/ulrichmonji/haproxy-training.git
+        git clone https://github.com/eazytraining/haproxy-training.git
         cd haproxy-training/TP0
         docker build -t site1  ./site1/
         docker run -d --name site1 -p 81:80 site1
