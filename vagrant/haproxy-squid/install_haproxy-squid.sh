@@ -21,10 +21,10 @@ then
         #echo "###################################################"
         #echo "       Let's go to install HAProxy programm        "
         #echo "###################################################"
-        #sudo yum install haproxy -y
-        #sudo sed -i s/5000/50000/g /etc/haproxy/haproxy.cfg
-        #sudo systemctl enable --now haproxy
-        #sudo systemctl restart haproxy
+        sudo yum install haproxy -y
+        sudo sed -i s/5000/50000/g /etc/haproxy/haproxy.cfg
+        sudo systemctl enable --now haproxy
+        sudo systemctl restart haproxy
         echo "###################################################"
         echo "     Install backend applications for HAProxy      "
         echo "###################################################"
