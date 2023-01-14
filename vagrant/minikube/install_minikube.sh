@@ -37,4 +37,12 @@ else
     echo "The zsh is not installed on this server"
 fi
 
-echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
+
+IS_MINIKUBE_UP=$(curl -k https://localhost:8443/livez?verbose | grep -i "livez check passed")
+
+if [[ ($IS_MINIKUBE_UP == "livez check passed") ]]
+then
+    echo -e "Everything is Good, minikube is ready. \nFor this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
+else
+    echo "Error, your minikube server (Kubernetes) is not running"
+fi
