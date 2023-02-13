@@ -110,6 +110,7 @@ Resources:
 
             # Deploy eks stack
              curl -o eks.yaml https://raw.githubusercontent.com/diranetafen/cursus-devops/master/stack/eks-cloudformation.yaml
+            # curl -o eks.yaml https://raw.githubusercontent.com/ulrichmonji/cursus-devops/review/aws-devops/stack/eks-cloudformation.yaml
              aws cloudformation create-stack --stack-name EKS \
              --template-body file://eks.yaml \
              --parameters ParameterKey=AvailabilityZonePublicSubnet01,ParameterValue="us-east-1a" \

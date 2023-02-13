@@ -9,7 +9,7 @@
     
     EKSVersion:
       Type: String
-      Default: 1.21
+      Default: 1.23
       AllowedValues: 
         - 1.21
         - 1.22
