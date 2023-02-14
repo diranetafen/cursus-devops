@@ -76,7 +76,7 @@ Resources:
           Ebs:
             VolumeSize: 20
       KeyName: !Ref 'KeyName'
-      ImageId: 'ami-0057d8e6fb0692b80'
+      ImageId: 'ami-012cc038cc685a0d7'
       IamInstanceProfile: !Ref eksDeployInstanceProfile
       UserData:
         'Fn::Base64':
@@ -110,6 +110,7 @@ Resources:
 
             # Deploy eks stack
              curl -o eks.yaml https://raw.githubusercontent.com/diranetafen/cursus-devops/master/stack/eks-cloudformation.yaml
+            # curl -o eks.yaml https://raw.githubusercontent.com/ulrichmonji/cursus-devops/review/aws-devops/stack/eks-cloudformation.yaml
              aws cloudformation create-stack --stack-name EKS \
              --template-body file://eks.yaml \
              --parameters ParameterKey=AvailabilityZonePublicSubnet01,ParameterValue="us-east-1a" \
