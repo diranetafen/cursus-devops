@@ -2,7 +2,7 @@
 #!/bin/bash
 yum -y update
 yum -y install epel-release
-yum install -y python3
+yum install -y python3 git
 if [ $1 == "master" ]
 then
 
