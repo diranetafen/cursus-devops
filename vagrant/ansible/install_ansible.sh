@@ -11,6 +11,12 @@ then
   /usr/local/bin/pip3 install ansible
   yum install -y sshpass
   
+  # install docker-compose 1.29.2
+  sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  sudo chmod +x /usr/local/bin/docker-compose
+  sudo cp /usr/local/bin/docker-compose /bin/docker-compose
+  sudo chmod +x /bin/docker-compose
+
   # Install zsh if needed
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
     then
