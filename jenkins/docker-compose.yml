@@ -5,8 +5,7 @@ services:
   jenkins:
     # image: 'bitnami/jenkins:2'
     # image: dirane/jenkins-docker-ansible-clair
-    # image: eazytraining/jenkins
-    image: jenkins/jenkins:lts
+    image: eazytraining/jenkins
     restart: always
     ports:
       - '8080:8080'
@@ -17,7 +16,6 @@ services:
       - 'jenkins_data:/bitnami'
       - '/var/run/docker.sock:/var/run/docker.sock'
       - 'jenkins_home:/var/jenkins_home'
-      - '/usr/bin/docker:/usr/bin/docker'
 volumes:
   jenkins_data:
     driver: local
