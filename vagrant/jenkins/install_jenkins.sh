@@ -13,6 +13,8 @@ ansible-galaxy install -r roles/requirements.yml
 ansible-playbook install_docker.yml
 sudo usermod -aG docker vagrant
 cd ../jenkins
+curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
 /usr/local/bin/docker-compose up -d
 
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
