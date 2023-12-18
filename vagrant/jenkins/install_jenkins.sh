@@ -31,4 +31,4 @@ else
     echo "The zsh is not installed on this server"
 fi
 echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
-echo -e "to get jenkins password, please use the following command  \n *** 'docker exec \$(docker ps -a | grep jenkins | awk '{print $1}') bash -c 'cat /var/jenkins_home/secrets/initialAdminPassword ***'"
+echo -e "to get jenkins password, please use the following command  \n *** 'docker exec \$(docker ps -a | grep jenkins | awk '{print $1}') bash -c 'cat /var/jenkins_home/secrets/initialAdminPassword' ***'"
