@@ -72,9 +72,9 @@ echo
 # install argocd
 # ref: https://argo-cd.readthedocs.io/en/stable/getting_started/
 kubectl create ns argocd
-kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
-sudo curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
-sudo chmod +x /usr/local/bin/argocd
+
+#kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.9.3/manifests/install.yaml
 echo
 echo ...Waiting for pods to be ready
 echo
@@ -94,9 +94,33 @@ argocd=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{
 echo
 echo !!!!!!!!!!!!!
 echo Change The default Service port for ArgoCD Server
-git clone https://github.com/diranetafen/cursus-devops.git
-cd cursus-devops/argocd
-kubectl apply -f argocd-server-svc.yml
+kubectl apply -f - <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: argocd-server
+  namespace: argocd
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 8080
+    nodePort: 30000
+  selector:
+    app.kubernetes.io/name: argocd-server
+  type: NodePort
+EOF
+
+#Init Git directory
+sudo mkdir /repos
+cd /repos
+git init --bare
+
 #tools for kubernetes
 echo 
 echo ...kubens and kubectx installing
@@ -108,7 +132,7 @@ echo "source /opt/kubectx/completion/kubectx.bash" >> ~/.bashrc
 echo "source /opt/kubectx/completion/kubens.bash" >> ~/.bashrc
 
 #tools for ArgoCD
-curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.9.3/argocd-linux-amd64
 chmod +x /usr/local/bin/argocd
 
 #Kustomize tools
@@ -132,7 +156,9 @@ then
     echo "The zsh is not installed on this server"    
 fi
 
+echo "IMPORTANT !!!!!!!!!!!!!!"
 echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
 echo "For ArgoCD Server Use this credentials: User = admin && Password = "$argocd " with this NodePort Service = 30000"
+
 
 
