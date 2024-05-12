@@ -1,21 +1,26 @@
-#!/bin/sh
-echo "deb http://ppa.launchpad.net/ansible/ansible/ubuntu trusty main" >> /etc/apt/sources.list
-apt-get update
-apt-get -y install dirmngr --install-recommends
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 93C4A3FD7BB9C367
-apt update
-apt -y install ansible
+#!/bin/bash
+sudo yum -y update
 
-# retrieve ansible code
-apt -y install git
+# install docker
+sudo yum install -y git python3 epel-release
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+sudo usermod -aG docker vagrant
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+#Install ansible 
+curl -sS https://bootstrap.pypa.io/pip/3.6/get-pip.py | sudo python3
+/usr/local/bin/pip3 install ansible
+yum install -y sshpass
 git clone https://github.com/diranetafen/cursus-devops.git
 cd cursus-devops/ansible
-ansible-galaxy install -r roles/requirements.yml
-ansible-playbook install_docker.yml
-usermod -aG docker vagrant
+/usr/local/bin/ansible-galaxy install -r roles/requirements.yml
 #before install gitlab-ci we get the punlic dns
 
-GITLAB_EXTERNAL_HOSTNAME=`ip -f inet addr show eth1 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p'`
+
+GITLAB_EXTERNAL_HOSTNAME=`ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p'`
 
 # Create cert path for docker
 sudo mkdir -p  /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME
@@ -35,7 +40,7 @@ cp /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.key /
 cp /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.crt /opt/gitlab/cert/$GITLAB_EXTERNAL_HOSTNAME.crt
 
 # Deploy GitLab with Ansible
-ansible-playbook install_gitlab_ci.yml --extra-var "gitlab_external_hostname=${GITLAB_EXTERNAL_HOSTNAME}"
+/usr/local/bin/ansible-playbook install_gitlab_ci.yml --extra-var "gitlab_external_hostname=${GITLAB_EXTERNAL_HOSTNAME}"
 
 # Manage .crt and .key files to enable authentication
 rm -f /etc/docker/certs.d/$GITLAB_EXTERNAL_HOSTNAME/$GITLAB_EXTERNAL_HOSTNAME.key
@@ -47,4 +52,4 @@ echo "Depending on your internet connection speed the download image operation m
 echo "So don't be worry if gitlab container was not up immedialty, you can check the progress state with the following command"
 echo "sudo journalctl -u gitlab-docker.service"
 echo "or docker ps to check if containers are already up and running"
-echo "For this Stack, you will use $(ip -f inet addr show eth1 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
+echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
