@@ -2,6 +2,10 @@
 # Create log file
 LOGS_FILE="/tmp/install_jenkins.log"
 echo -e "You will find vagrant provisionings logs below"  > ${LOGS_FILE}
+sudo sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo
+sudo sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo
+sudo sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
+sudo yum update -y
 
 # Install Jenkins repositorie and upgrade system
 wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
