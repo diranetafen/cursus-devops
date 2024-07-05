@@ -1,7 +1,4 @@
 #!/bin/sh
-sudo sed -i s/mirror.centos.org/vault.centos.org/g /etc/yum.repos.d/*.repo
-sudo sed -i s/^#.*baseurl=http/baseurl=http/g /etc/yum.repos.d/*.repo
-sudo sed -i s/^mirrorlist=http/#mirrorlist=http/g /etc/yum.repos.d/*.repo
 sudo yum -y update
 sudo yum -y install epel-release
 sudo yum -y install git libvirt qemu-kvm virt-install virt-top libguestfs-tools bridge-utils

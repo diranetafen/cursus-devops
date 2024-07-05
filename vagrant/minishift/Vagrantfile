@@ -4,7 +4,7 @@
 Vagrant.configure("2") do |config|
   config.vm.define "openshift" do |openshift|
     openshift.vm.disk :disk, size: "50GB", primary: true
-    openshift.vm.box = "geerlingguy/centos7"
+    openshift.vm.box = "eazytrainingfr/centos7"
     openshift.vm.network "private_network", type: "static", ip: "192.168.99.11"
     openshift.vm.hostname = "openshift"
     openshift.vm.provider "virtualbox" do |v|
@@ -22,7 +22,7 @@ Vagrant.configure("2") do |config|
     end
   end
   config.vm.define "minishift" do |minishift|
-    minishift.vm.box = "geerlingguy/centos7"
+    minishift.vm.box = "eazytrainingfr/centos7"
     minishift.vm.network "private_network", type: "static", ip: "192.168.99.10"
     minishift.vm.hostname = "minishift"
     minishift.vm.provider "virtualbox" do |v|
