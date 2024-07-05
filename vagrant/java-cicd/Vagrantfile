@@ -3,7 +3,7 @@
 
 Vagrant.configure("2") do |config|
     config.vm.define "java" do |java|
-      java.vm.box = "geerlingguy/centos7"
+      java.vm.box = "eazytrainingfr/centos7"
       java.vm.network "private_network", type: "dhcp"
       java.vm.hostname = "java"
       java.vm.provider "virtualbox" do |v|

@@ -6,7 +6,8 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "ansible" do |ansible|
-    ansible.vm.box = "geerlingguy/centos7"
+    ansible.vm.box = "eazytrainingfr/centos7"
+    ansible.vm.box_version = "1.0"
     ansible.vm.network "private_network", type: "static", ip: "192.168.99.10"
     ansible.vm.hostname = "ansible"
     ansible.vm.provider "virtualbox" do |v|
@@ -26,7 +27,8 @@ Vagrant.configure("2") do |config|
   cpu_client=2
   (1..clients).each do |i|
     config.vm.define "client#{i}" do |client|
-      client.vm.box = "geerlingguy/centos7"
+      client.vm.box = "eazytrainingfr/centos7"
+      client.vm.box_version = "1.0"
       client.vm.network "private_network", type: "static", ip: "192.168.99.1#{i}"
       client.vm.hostname = "client#{i}"
       client.vm.provider "virtualbox" do |v|
