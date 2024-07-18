@@ -1,0 +1,42 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    config.vm.define "master" do |master|
+      master.vm.box = "eazytrainingfr/centos7"
+      master.vm.box_version = "1.0"
+      master.vm.network "private_network", type: "static", ip: "192.168.99.90"
+      master.vm.hostname = "master"
+      master.vm.provider "virtualbox" do |v|
+        v.name = "master"
+        v.memory = 2048
+        v.cpus = 2
+      end
+      master.vm.provision :shell do |shell|
+        shell.path = "install_kubernetes.sh"
+        shell.args = ["master", "192.168.99.90"]
+      end
+    end
+    workers=1
+    ram_worker=2048
+    cpu_worker=2
+    (1..workers).each do |i|
+      config.vm.define "worker#{i}" do |worker|
+        worker.vm.box = "eazytrainingfr/centos7"
+        worker.vm.box_version = "1.0"
+        worker.vm.network "private_network", type: "static", ip: "192.168.99.9#{i}"
+        worker.vm.hostname = "worker#{i}"
+        worker.vm.provider "virtualbox" do |v|
+          v.name = "worker#{i}"
+          v.memory = ram_worker
+          v.cpus = cpu_worker
+        end
+        worker.vm.provision :shell do |shell|
+          shell.path = "install_kubernetes.sh"
+          shell.args = ["node", "192.168.99.90"]
+        end
+      end
+    end
+  end
+  
+  

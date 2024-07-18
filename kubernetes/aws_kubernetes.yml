@@ -1,0 +1,607 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Metadata:
+  License: Apache-2.0
+
+Description: Create a variable number of EC2 instance resources.
+Parameters:
+  masterData:
+      Type: String
+      Default: |
+            #!/bin/bash
+            LOG_FILE=/var/log/kubernetes.log
+            exec > >(tee ${LOG_FILE}) 2>&1
+            sudo echo nameserver 8.8.8.8 | sudo tee /etc/resolv.conf
+            sed -i '/\[main\]/a dns=none' /etc/NetworkManager/NetworkManager.conf
+            sudo systemctl restart NetworkManager.service
+            sudo sed -i "/^[^#]*PasswordAuthentication[[:space:]]no/c\PasswordAuthentication yes" /etc/ssh/sshd_config
+            sudo service sshd restart
+            sudo chpasswd <<<"centos:a231e83092beedf5c757691a1e26462a"
+            yum -y update
+            yum -y install epel-release
+            
+            # AWSCLI 2.x.x installation 
+            sudo yum install unzip wget -y
+            sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            sudo unzip awscliv2.zip
+            sudo ./aws/install
+
+            # Install kubernetes
+
+            # install ansible
+            yum -y install ansible
+            # retrieve ansible code
+            yum -y install git
+            rm -Rf kubernetes-certification-stack || echo "previous folder removed"
+            git clone -b v1.29 https://github.com/eazytraining/kubernetes-certification-stack.git
+            cd kubernetes-certification-stack
+            KUBERNETES_VERSION=1.29.1
+            ansible-galaxy install -r roles/requirements.yml
+            ec2_private_ip=$(curl http://169.254.169.254/latest/meta-data/local-ipv4)
+            export KUBECONFIG=/etc/kubernetes/admin.conf
+            ansible-playbook install_kubernetes.yml --extra-vars "kubernetes_role=control_plane kubernetes_apiserver_advertise_address=$ec2_private_ip installation_method=aws kubernetes_version_rhel_package='$KUBERNETES_VERSION' kubernetes_kubelet_extra_args='--node-ip={{ ansible_eth0.ipv4.address }}'" -e "{'kubernetes_pod_network': {'cni': 'aws-k8s-cni', 'cidr': '192.168.99.0/24'}}"
+            
+            yum install bash-completion -y && kubectl completion bash | sudo tee /etc/bash_completion.d/kubectl > /dev/null
+            PASSWORD=$(aws ecr get-login-password --region us-west-2)
+            cat <<EOT >> /etc/crictl.yaml
+            runtime-endpoint: unix:///var/run/containerd/containerd.sock
+            image-endpoint: unix:///var/run/containerd/containerd.sock
+            EOT
+
+            crictl pull --creds "AWS:$PASSWORD" 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni-init:v1.12.6
+            crictl pull --creds "AWS:$PASSWORD" 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.12.6
+            kubectl apply -f https://raw.githubusercontent.com/aws/amazon-vpc-cni-k8s/release-1.12/config/master/aws-k8s-cni.yaml
+
+            echo "###################################################"
+            echo "Installation completed !!!!!"
+            echo "###################################################"
+  workerData:
+      Type: String
+      Default: |
+            #!/bin/bash
+            LOG_FILE=/var/log/kubernetes.log
+            exec > >(tee ${LOG_FILE}) 2>&1
+            sudo echo nameserver 8.8.8.8 | sudo tee /etc/resolv.conf
+            sed -i '/\[main\]/a dns=none' /etc/NetworkManager/NetworkManager.conf
+            sudo systemctl restart NetworkManager.service
+            sudo sed -i "/^[^#]*PasswordAuthentication[[:space:]]no/c\PasswordAuthentication yes" /etc/ssh/sshd_config
+            sudo service sshd restart
+            sudo chpasswd <<<"centos:a231e83092beedf5c757691a1e26462a"
+            yum -y update
+            yum -y install epel-release
+
+            # AWSCLI 2.x.x installation 
+            sudo yum install unzip wget -y
+            sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            sudo unzip awscliv2.zip
+            sudo ./aws/install
+
+            # Install kubernetes
+            STACK_NAME=$(curl --silent http://169.254.169.254/latest/meta-data/tags/instance/Name)
+            MASTER_EC2_NAME=$(echo ${STACK_NAME%-worker*}-master)
+            until KubernetesMasterPrivateIP=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PrivateIpAddress]" --filters Name=tag:Name,Values=$MASTER_EC2_NAME Name=instance-state-name,Values=running --output text); do
+              if [  -z $KubernetesMasterPrivateIP  ]; then
+                sudo /usr/local/bin/aws configure set region us-east-1
+                KubernetesMasterPrivateIP=$(/usr/local/bin/aws ec2 describe-instances --query "Reservations[*].Instances[*].[PrivateIpAddress]" --filters Name=tag:Name,Values=$MASTER_EC2_NAME Name=instance-state-name,Values=running --output text)
+              fi
+            done
+            IS_KUBERNETES_UP=$(curl -k https://$KubernetesMasterPrivateIP:6443/livez?verbose | grep -i "livez check passed")
+
+            until [ "$IS_KUBERNETES_UP" == "livez check passed" ]
+            do
+                sleep 60
+                echo "verify that master node is ready ..."
+                IS_KUBERNETES_UP=$(curl -k https://$KubernetesMasterPrivateIP:6443/livez?verbose | grep -i "livez check passed")
+            done
+
+            # install ansible
+            yum -y install ansible
+            # retrieve ansible code
+            yum -y install git
+            rm -Rf kubernetes-certification-stack || echo "previous folder removed"
+            git clone https://github.com/eazytraining/kubernetes-certification-stack.git
+            cd kubernetes-certification-stack
+            KUBERNETES_VERSION=1.29.1
+            ansible-galaxy install -r roles/requirements.yml
+            ansible-playbook install_kubernetes.yml --extra-vars "kubernetes_role=node kubernetes_apiserver_advertise_address=$KubernetesMasterPrivateIP installation_method=aws kubernetes_version_rhel_package='$KUBERNETES_VERSION' kubernetes_kubelet_extra_args='--node-ip={{ ansible_eth0.ipv4.address }}' kubernetes_join_command='kubeadm join {{ kubernetes_apiserver_advertise_address }}:6443 --ignore-preflight-errors=all --token={{ token }}  --discovery-token-unsafe-skip-ca-verification'"
+
+            PASSWORD=$(aws ecr get-login-password --region us-west-2)
+            cat <<EOT >> /etc/crictl.yaml
+            runtime-endpoint: unix:///var/run/containerd/containerd.sock
+            image-endpoint: unix:///var/run/containerd/containerd.sock
+            EOT
+            crictl pull --creds "AWS:$PASSWORD" 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni-init:v1.12.6
+            crictl pull --creds "AWS:$PASSWORD" 602401143452.dkr.ecr.us-west-2.amazonaws.com/amazon-k8s-cni:v1.12.6
+
+            echo "###################################################"
+            echo "Installation completed !!!!!"
+            echo "###################################################"
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+    Default: devops
+
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: 9
+    MaxLength: 18
+    Default: 0.0.0.0/0
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+  InstanceCount:
+    Description: Number of EC2 worker instances (must be between 1 and 3).
+    Type: String
+    Default: 1
+    AllowedValues:
+      - "1"
+      - "2"
+      - "3"
+  InstanceTypeInstance:
+    Description: Instance type to launch EC2 Remote instances.
+    Type: String
+    Default: t2.medium
+    AllowedValues: [t2.micro, t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      m5.large, m5.xlarge, m5.2xlarge, m5.4xlarge,
+      c5.large, c5.xlarge, c5.2xlarge, c5.4xlarge, c5.9xlarge,
+      g3.8xlarge,
+      r5.large, r5.xlarge, r5.2xlarge, r5.4xlarge, r3.12xlarge,
+      i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
+    ConstraintDescription: must be a valid EC2 instance type.
+
+  ImageTypeInstance:
+    Description: image type for instance server
+    Default: "CentOS Linux 7 (Core) - ami-012cc038cc685a0d7"
+    Type: String
+    AllowedValues:
+#      - "Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd"
+      - "CentOS Linux 7 (Core) - ami-012cc038cc685a0d7"
+    ConstraintDescription: must specify debian or centos
+
+  StorageInstance:
+    Description: Storage size (Go) for Remote server
+    Default: "20"
+    Type: String
+    AllowedValues:
+      - "10"
+      - "20"
+      - "40"
+      - "60"
+      - "80"
+      - "100"
+    ConstraintDescription: must specify 60, 80 or 100 Go.
+
+Conditions:
+  Launch1: !Equals [1, 1]
+  Launch2: !Or
+  - !Equals [2, !Ref InstanceCount]
+  - !Equals [3, !Ref InstanceCount]
+  
+
+  Launch3: !Equals [3, !Ref InstanceCount]
+
+  DebianImageInstance: !Equals [!Ref ImageTypeInstance, "Debian GNU/Linux 9 (stretch) - ami-003f19e0e687de1cd"]
+  CentosImageInstance: !Equals [!Ref ImageTypeInstance, "CentOS Linux 7 (Core) - ami-012cc038cc685a0d7"]
+
+Resources:
+  workerLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Join ["-", [!Ref AWS::StackName, workerLaunchTemplate]]
+      LaunchTemplateData:
+        MetadataOptions: 
+          InstanceMetadataTags: "enabled"
+        ImageId:
+          !If [DebianImageInstance, 'ami-003f19e0e687de1cd', !If [CentosImageInstance, 'ami-012cc038cc685a0d7', ' ']]
+        InstanceType: !Ref InstanceTypeInstance
+        NetworkInterfaces: 
+          - AssociatePublicIpAddress: "true"
+            DeviceIndex: "0"
+            Groups: 
+              - Ref: "SecurityGroup"
+            SubnetId: 
+              Ref: "PubSubnet"
+        IamInstanceProfile:
+          Arn: !GetAtt
+            - ec2InstanceProfileDescribeInstance
+            - Arn      
+        KeyName: !Ref 'KeyName'
+        UserData: 
+          'Fn::Base64':
+            !Ref workerData
+        BlockDeviceMappings:
+          - DeviceName:
+              !If [DebianImageInstance, xvda, !If [CentosImageInstance, /dev/sda1, ' ']]
+            Ebs:
+              VolumeSize: !Ref StorageInstance
+              DeleteOnTermination: true
+  PubVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+      - Key: Name
+        Value: !Join ["-", [!Ref AWS::StackName, VPC]]
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join ["-", [!Ref AWS::StackName, IGW]]
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref PubVPC
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref PubVPC
+      Tags:
+      - Key: Name
+        Value: !Join ["-", [!Ref AWS::StackName, route]]
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+    
+  PubSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref PubVPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 192.168.99.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+      - Key: Name
+        Value: !Join ["-", [!Ref AWS::StackName, subnet]]
+      - Key: kubernetes.io/role/elb
+        Value: 1
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PubSubnet 
+
+  ec2RoleDescribeInstance:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+
+  ec2InstanceProfileDescribeInstance:
+    Type: 'AWS::IAM::InstanceProfile'
+    Properties:
+      Path: /
+      Roles:
+        - !Ref ec2RoleDescribeInstance
+
+  ec2RolePoliciesDescribeInstance:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Join ["-", [!Ref AWS::StackName, ec2RoleDescribeInstance]]
+      PolicyDocument:
+        Statement:
+            #Allow permission to describe all ec2 instances
+          - Effect: Allow
+            Action: 'ec2:DescribeInstances'
+            Resource: '*'
+          - Effect: Allow
+            Action: 
+              - 'ec2:AssignPrivateIpAddresses'
+              - 'ec2:AttachNetworkInterface'
+              - 'ec2:CreateNetworkInterface'
+              - 'ec2:DeleteNetworkInterface'
+              - 'ec2:DescribeInstances'
+              - 'ec2:DescribeTags'
+              - 'ec2:DescribeNetworkInterfaces'
+              - 'ec2:DescribeInstanceTypes'
+              - 'ec2:DetachNetworkInterface'
+              - 'ec2:ModifyNetworkInterfaceAttribute'
+              - 'ec2:UnassignPrivateIpAddresses'
+            Resource: '*'
+          - Effect: Allow
+            Action: 'ecr:*'
+            Resource: '*'
+          - Effect: Allow
+            Action: 'ec2:CreateTags'
+            Resource: 'arn:aws:ec2:*:*:network-interface/*'
+        
+      Roles:
+        - !Ref ec2RoleDescribeInstance
+  awsLoadBalancerController:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: !Join ["-", [!Ref AWS::StackName, awsLoadBalancerController]]
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'iam:CreateServiceLinkedRole'
+              - 'ec2:DescribeAccountAttributes'
+              - 'ec2:DescribeAddresses'
+              - 'ec2:DescribeAvailabilityZones'
+              - 'ec2:DescribeInternetGateways'
+              - 'ec2:DescribeVpcs'
+              - 'ec2:DescribeSubnets'
+              - 'ec2:DescribeSecurityGroups'
+              - 'ec2:DescribeInstances'
+              - 'ec2:DescribeNetworkInterfaces'
+              - 'ec2:DescribeTags'
+              - 'ec2:GetCoipPoolUsage'
+              - 'ec2:DescribeCoipPools'
+              - 'elasticloadbalancing:DescribeLoadBalancers'
+              - 'elasticloadbalancing:DescribeLoadBalancerAttributes'
+              - 'elasticloadbalancing:DescribeListeners'
+              - 'elasticloadbalancing:DescribeListenerCertificates'
+              - 'elasticloadbalancing:DescribeSSLPolicies'
+              - 'elasticloadbalancing:DescribeRules'
+              - 'elasticloadbalancing:DescribeTargetGroups'
+              - 'elasticloadbalancing:DescribeTargetGroupAttributes'
+              - 'elasticloadbalancing:DescribeTargetHealth'
+              - 'elasticloadbalancing:DescribeTags'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'cognito-idp:DescribeUserPoolClient'
+              - 'acm:ListCertificates'
+              - 'acm:DescribeCertificate'
+              - 'iam:ListServerCertificates'
+              - 'iam:GetServerCertificate'
+              - 'waf-regional:GetWebACL'
+              - 'waf-regional:GetWebACLForResource'
+              - 'waf-regional:AssociateWebACL'
+              - 'waf-regional:DisassociateWebACL'
+              - 'wafv2:GetWebACL'
+              - 'wafv2:GetWebACLForResource'
+              - 'wafv2:AssociateWebACL'
+              - 'wafv2:DisassociateWebACL'
+              - 'shield:GetSubscriptionState'
+              - 'shield:DescribeProtection'
+              - 'shield:CreateProtection'
+              - 'shield:DeleteProtection'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'ec2:AuthorizeSecurityGroupIngress'
+              - 'ec2:RevokeSecurityGroupIngress'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateSecurityGroup'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateTags'
+            Resource: 'arn:aws:ec2:*:*:security-group/*'
+            Condition:
+              StringEquals:
+                'ec2:CreateAction': CreateSecurityGroup
+              'Null':
+                'aws:RequestTag/elbv2.k8s.aws/cluster': 'false'
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateTags'
+              - 'ec2:DeleteTags'
+            Resource: 'arn:aws:ec2:*:*:security-group/*'
+            Condition:
+              'Null':
+                'aws:RequestTag/elbv2.k8s.aws/cluster': 'true'
+                'aws:ResourceTag/elbv2.k8s.aws/cluster': 'false'
+          - Effect: Allow
+            Action:
+              - 'ec2:AuthorizeSecurityGroupIngress'
+              - 'ec2:RevokeSecurityGroupIngress'
+              - 'ec2:DeleteSecurityGroup'
+            Resource: '*'
+            Condition:
+              'Null':
+                'aws:ResourceTag/elbv2.k8s.aws/cluster': 'false'
+          - Effect: Allow
+            Action:
+              - 'elasticloadbalancing:CreateLoadBalancer'
+              - 'elasticloadbalancing:CreateTargetGroup'
+            Resource: '*'
+            Condition:
+              'Null':
+                'aws:RequestTag/elbv2.k8s.aws/cluster': 'false'
+          - Effect: Allow
+            Action:
+              - 'elasticloadbalancing:CreateListener'
+              - 'elasticloadbalancing:DeleteListener'
+              - 'elasticloadbalancing:CreateRule'
+              - 'elasticloadbalancing:DeleteRule'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+              - 'elasticloadbalancing:AddTags'
+              - 'elasticloadbalancing:RemoveTags'
+            Resource:
+              - 'arn:aws:elasticloadbalancing:*:*:targetgroup/*/*'
+              - 'arn:aws:elasticloadbalancing:*:*:loadbalancer/net/*/*'
+              - 'arn:aws:elasticloadbalancing:*:*:loadbalancer/app/*/*'
+            Condition:
+              'Null':
+                'aws:RequestTag/elbv2.k8s.aws/cluster': 'true'
+                'aws:ResourceTag/elbv2.k8s.aws/cluster': 'false'
+          - Effect: Allow
+            Action:
+              - 'elasticloadbalancing:AddTags'
+              - 'elasticloadbalancing:RemoveTags'
+            Resource:
+              - 'arn:aws:elasticloadbalancing:*:*:listener/net/*/*/*'
+              - 'arn:aws:elasticloadbalancing:*:*:listener/app/*/*/*'
+              - 'arn:aws:elasticloadbalancing:*:*:listener-rule/net/*/*/*'
+              - 'arn:aws:elasticloadbalancing:*:*:listener-rule/app/*/*/*'
+          - Effect: Allow
+            Action:
+              - 'elasticloadbalancing:ModifyLoadBalancerAttributes'
+              - 'elasticloadbalancing:SetIpAddressType'
+              - 'elasticloadbalancing:SetSecurityGroups'
+              - 'elasticloadbalancing:SetSubnets'
+              - 'elasticloadbalancing:DeleteLoadBalancer'
+              - 'elasticloadbalancing:ModifyTargetGroup'
+              - 'elasticloadbalancing:ModifyTargetGroupAttributes'
+              - 'elasticloadbalancing:DeleteTargetGroup'
+            Resource: '*'
+            Condition:
+              'Null':
+                'aws:ResourceTag/elbv2.k8s.aws/cluster': 'false'
+          - Effect: Allow
+            Action:
+              - 'elasticloadbalancing:RegisterTargets'
+              - 'elasticloadbalancing:DeregisterTargets'
+            Resource: 'arn:aws:elasticloadbalancing:*:*:targetgroup/*/*'
+          - Effect: Allow
+            Action:
+              - 'elasticloadbalancing:SetWebAcl'
+              - 'elasticloadbalancing:ModifyListener'
+              - 'elasticloadbalancing:AddListenerCertificates'
+              - 'elasticloadbalancing:RemoveListenerCertificates'
+              - 'elasticloadbalancing:ModifyRule'
+            Resource: '*'
+        
+      Roles:
+        - !Ref ec2RoleDescribeInstance
+          
+  Master:
+    Type: AWS::EC2::Instance
+    Properties:
+      Tags:
+       - Key: Name
+         Value: !Join ["-", [!Ref AWS::StackName, master]]
+      ImageId:
+        !If [DebianImageInstance, 'ami-003f19e0e687de1cd', !If [CentosImageInstance, 'ami-012cc038cc685a0d7', ' ']]
+      InstanceType: !Ref InstanceTypeInstance
+      NetworkInterfaces: 
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          GroupSet: 
+            - Ref: "SecurityGroup"
+          SubnetId: 
+            Ref: "PubSubnet"
+      IamInstanceProfile: !Ref ec2InstanceProfileDescribeInstance      
+      KeyName: !Ref 'KeyName'
+      UserData: 
+        'Fn::Base64':
+          !Ref masterData
+
+      BlockDeviceMappings:
+        - DeviceName:
+            !If [DebianImageInstance, xvda, !If [CentosImageInstance, /dev/sda1, ' ']]
+          Ebs:
+            VolumeSize: !Ref StorageInstance
+            DeleteOnTermination: true
+  Instance1:
+    Condition: Launch1
+    Type: AWS::EC2::Instance
+    DependsOn: Master
+    Properties:
+      Tags:
+       - Key: Name
+         Value: !Join ["-", [!Ref AWS::StackName, worker1]]
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref workerLaunchTemplate
+        Version: !GetAtt workerLaunchTemplate.LatestVersionNumber
+  Instance2:
+    Condition: Launch2
+    Type: AWS::EC2::Instance
+    DependsOn: Master
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref AWS::StackName, worker2]]
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref workerLaunchTemplate
+        Version: !GetAtt workerLaunchTemplate.LatestVersionNumber
+  Instance3:
+    Condition: Launch3
+    Type: AWS::EC2::Instance
+    DependsOn: Master
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref AWS::StackName, worker3]]
+      LaunchTemplate: 
+        LaunchTemplateId: !Ref workerLaunchTemplate
+        Version: !GetAtt workerLaunchTemplate.LatestVersionNumber
+
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref PubVPC
+      Tags:
+       - Key: Name
+         Value: !Join ["-", [!Ref AWS::StackName, AllowKubePort]]
+      GroupDescription: Allow kubernetes and admin ports
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 8080
+        ToPort: 8080
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 8090
+        ToPort: 8090
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 30000
+        ToPort: 32767
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 6443
+        ToPort: 6443
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 2379
+        ToPort: 2380
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 10250
+        ToPort: 10250
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 53
+        ToPort: 53
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: udp
+        FromPort: 53
+        ToPort: 53
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 9443
+        ToPort: 9443
+        CidrIp: !Ref 'SSHLocation'
+      - IpProtocol: tcp
+        FromPort: 8443
+        ToPort: 8443
+        CidrIp: !Ref 'SSHLocation'
