@@ -3,12 +3,31 @@
 yum -y update
 yum -y install epel-release
 
+# ENABLE TOOLS
+DOCKER=19.03 # supported value [ON, OFF, X.X]
+
+# install docker
+sudo yum install -y git
 # Install docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-usermod -aG docker vagrant
-systemctl enable docker
-systemctl start docker
+case $DOCKER in
+  ON)
+    echo "Only ON and OFF value supported"
+    sudo curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+    sudo usermod -aG docker vagrant
+    sudo systemctl enable docker
+    sudo systemctl start docker
+    ;;
+  OFF)
+    echo "skip docker installation"
+    ;;
+  *)
+    echo "Only ON and OFF value supported"
+    sudo curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh --version $DOCKER
+    sudo usermod -aG docker vagrant
+    sudo systemctl enable docker
+    sudo systemctl start docker
+    ;;
+esac
 yum install -y sshpass
 
 if [ $1 == "master" ]
