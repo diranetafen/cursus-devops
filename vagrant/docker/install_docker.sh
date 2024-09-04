@@ -2,13 +2,31 @@
 #Update
 sudo yum -y update
 
+# ENABLE TOOLS
+DOCKER=19.03 # supported value [ON, OFF, X.X]
+
 # install docker
 sudo yum install -y git
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-sudo usermod -aG docker vagrant
-sudo systemctl enable docker
-sudo systemctl start docker
+# Install docker
+case $DOCKER in
+  ON)
+    echo "Only ON and OFF value supported"
+    sudo curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+    sudo usermod -aG docker vagrant
+    sudo systemctl enable docker
+    sudo systemctl start docker
+    ;;
+  OFF)
+    echo "skip docker installation"
+    ;;
+  *)
+    echo "Only ON and OFF value supported"
+    sudo curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh --version $DOCKER
+    sudo usermod -aG docker vagrant
+    sudo systemctl enable docker
+    sudo systemctl start docker
+    ;;
+esac
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
