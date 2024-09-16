@@ -22,7 +22,7 @@ Vagrant.configure("2") do |config|
       
     end
   end
-  clients=1
+  clients=2
   ram_client=2048
   cpu_client=2
   (1..clients).each do |i|
