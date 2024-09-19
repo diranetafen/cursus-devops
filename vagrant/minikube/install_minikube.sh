@@ -2,12 +2,15 @@
 
 set -e
 set -o pipefail
+export ENABLE_ZSH=true
 
 # Variables
-MINIKUBE_VERSION="latest"
+ENABLE_ZSH=true
+MINIKUBE_VERSION="v1.34.0"
 CRICTL_VERSION="v1.31.0"
 GO_VERSION="1.21.1"
 CNI_VERSION="v1.5.1"
+KUBERNETES_VERSION="1.31.1"
 
 # Mise à jour du système et remplacement des dépôts
 sudo sed -i -e 's/mirror.centos.org/vault.centos.org/g' \
@@ -25,6 +28,8 @@ sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/dock
 sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 sudo systemctl start docker
 sudo systemctl enable docker
+sudo usermod -aG docker vagrant
+sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 
 # Installation de Minikube
 curl -LO "https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/minikube-linux-amd64"
@@ -44,7 +49,9 @@ gpgkey=https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key
 exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
 EOF
 
-sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+sudo yum install -y kubelet-${KUBERNETES_VERSION} kubeadm-${KUBERNETES_VERSION} kubectl-${KUBERNETES_VERSION} --disableexcludes=kubernetes
+
+#sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
 sudo systemctl enable --now kubelet
 
 # Installation de conntrack
@@ -67,10 +74,25 @@ sudo mkdir -p /opt/cni/bin
 sudo tar -C /opt/cni/bin -xzvf "cni-plugins-linux-amd64-${CNI_VERSION}.tgz"
 
 # Installation de cri-dockerd
-wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.15/cri-dockerd-0.3.15.amd64.tgz
-tar -xvf cri-dockerd-0.3.15.amd64.tgz
-sudo mv cri-dockerd/cri-dockerd /usr/local/bin/
-sudo chmod +x /usr/local/bin/cri-dockerd
+# Définir les variables
+CRIDOCKERD_VERSION="0.3.15"
+ARCH="amd64"
+RELEASE_URL="https://github.com/Mirantis/cri-dockerd/releases/download/v${CRIDOCKERD_VERSION}/cri-dockerd-${CRIDOCKERD_VERSION}.${ARCH}.tgz"
+TAR_FILE="cri-dockerd-${CRIDOCKERD_VERSION}.${ARCH}.tgz"
+EXTRACTED_DIR="cri-dockerd"
+DESTINATION="/usr/local/bin/cri-dockerd"
+
+# Télécharger le fichier
+wget ${RELEASE_URL}
+
+# Extraire le fichier tar
+tar -xvf ${TAR_FILE}
+
+# Déplacer le binaire dans le répertoire /usr/local/bin
+sudo mv ${EXTRACTED_DIR}/cri-dockerd ${DESTINATION}
+
+# Donner les permissions d'exécution
+sudo chmod +x ${DESTINATION}
 
 # Installation de socat
 sudo yum install -y socat
@@ -112,9 +134,9 @@ sudo systemctl enable --now cri-dockerd.service
 sudo systemctl enable --now cri-docker.socket
 
 # Démarrer Minikube
-minikube start --driver=none
-
-yum install bash-completion -y
+#minikube start --driver=none --kubernetes-version v1.31.1
+su - vagrant -c "minikube start --driver=none --kubernetes-version v${KUBERNETES_VERSION}"
+sudo yum install bash-completion -y
 echo 'source <(kubectl completion bash)' >> ~vagrant/.bashrc
 echo 'alias k=kubectl' >> ~vagrant/.bashrc
 echo 'complete -F __start_kubectl k' >> ~vagrant/.bashrc
