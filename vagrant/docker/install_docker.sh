@@ -1,32 +1,24 @@
 #!/bin/bash
-#Update
+DOCKER_VERSION="19.03.2"
+ENABLE_ZSH=true
+
+# Mise à jour du système et remplacement des dépôts
+sudo sed -i -e 's/mirror.centos.org/vault.centos.org/g' \
+           -e 's/^#.*baseurl=http/baseurl=http/g' \
+           -e 's/^mirrorlist=http/#mirrorlist=http/g' \
+           /etc/yum.repos.d/*.repo
 sudo yum -y update
 
-# ENABLE TOOLS
-DOCKER=19.03 # supported value [ON, OFF, X.X]
+# Installation des paquets nécessaires
+sudo yum install -y yum-utils git wget curl iptables iptables-services
 
-# install docker
-sudo yum install -y git
-# Install docker
-case $DOCKER in
-  ON)
-    echo "Only ON and OFF value supported"
-    sudo curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
-    sudo usermod -aG docker vagrant
-    sudo systemctl enable docker
-    sudo systemctl start docker
-    ;;
-  OFF)
-    echo "skip docker installation"
-    ;;
-  *)
-    echo "Only ON and OFF value supported"
-    sudo curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh --version $DOCKER
-    sudo usermod -aG docker vagrant
-    sudo systemctl enable docker
-    sudo systemctl start docker
-    ;;
-esac
+# Installation de Docker
+sudo yum remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
+sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+sudo yum install -y docker-ce-${DOCKER_VERSION} docker-ce-cli-${DOCKER_VERSION} containerd.io docker-buildx-plugin docker-compose-plugin 
+sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker vagrant
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
