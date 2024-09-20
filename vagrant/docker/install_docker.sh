@@ -1,5 +1,5 @@
 #!/bin/bash
-DOCKER_VERSION="19.03.2"
+DOCKER_VERSION="3:19.03.2-3.el7"
 ENABLE_ZSH=true
 
 # Mise à jour du système et remplacement des dépôts
@@ -15,12 +15,11 @@ sudo yum install -y yum-utils git wget curl iptables iptables-services
 # Installation de Docker
 sudo yum remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
 sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-sudo yum install -y docker-ce-${DOCKER_VERSION} docker-ce-cli-${DOCKER_VERSION} containerd.io docker-buildx-plugin docker-compose-plugin 
+sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker vagrant
-sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
 then
