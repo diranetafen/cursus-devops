@@ -1,7 +1,7 @@
 
 #!/bin/bash
 
-VERSION_STRING=2.9.6+dfsg-1
+VERSION_STRING=2.9.10
 sudo apt -y update
 # sudo apt install -y python3 git curl wget 
 sudo apt install software-properties-common -y

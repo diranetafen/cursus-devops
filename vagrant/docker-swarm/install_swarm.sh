@@ -1,7 +1,7 @@
 
 #!/bin/bash
 apt -y update
-
+ENABLE_ZSH=true
 # ENABLE TOOLS
 DOCKER="5:20.10.0~3-0~ubuntu-focal" # supported value [ON, OFF, X.X]
 

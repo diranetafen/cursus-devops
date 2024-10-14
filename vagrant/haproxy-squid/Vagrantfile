@@ -7,7 +7,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "haproxy" do |haproxy|
-    haproxy.vm.box = "eazytrainingfr/centos7"
+    haproxy.vm.box = "ubuntu/focal64"
     haproxy.vm.network "private_network", type: "static", ip: "192.168.99.10"
     haproxy.vm.hostname = "haproxy"
     haproxy.vm.provider "virtualbox" do |v|
@@ -22,7 +22,7 @@ Vagrant.configure("2") do |config|
   end
 
     config.vm.define "squid" do |squid|
-      squid.vm.box = "eazytrainingfr/centos7"
+      squid.vm.box = "ubuntu/focal64"
       squid.vm.network "private_network", type: "static", ip: "192.168.99.11"
       squid.vm.hostname = "squid"
       squid.vm.provider "virtualbox" do |v|
