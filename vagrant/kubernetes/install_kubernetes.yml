@@ -7,7 +7,7 @@
       cni: 'flannel'
       cidr: '10.244.0.0/16'
     kubernetes_apt_gpg_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
-    kubernetes_version: "{{ kubernetes_version_ubuntu_package.split('.')[:2]  | join('.') }}"
+    kubernetes_version: "{{ kubernetes_version_ubuntu_package.split('.')[:2] | join('.') }}"
     kubernetes_kubelet_extra_args: "--node-ip={{ ansible_enp0s8.ipv4.address }}"
     crictl_version: "v1.30.0"
     kubernetes_config_kubelet_configuration:
@@ -28,11 +28,23 @@
           groups:
           - system:bootstrappers:kubeadm:default-node-token
     kubernetes_allow_pods_on_master: true
+
   pre_tasks:
+  - name: Add Kubernetes APT GPG key
+    apt_key:
+      url: "{{ kubernetes_apt_gpg_key }}"
+      state: present
+
+  - name: Add Kubernetes APT repository
+    apt_repository:
+      repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+      state: present
+
   - name: Update all packages
     apt:
       update_cache: yes
       upgrade: dist
+
   - name: Install required packages
     apt:
       name:
@@ -41,25 +53,30 @@
         - ca-certificates
         - software-properties-common
       state: present
+
   - name: Disable swap
     shell: |
       swapoff -a
       sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
     when: swap_disabled == true
+
   - name: Install NTP
     apt:
       name: ntp
       state: present
+
   - name: Update time
     service:
       name: ntp
       state: restarted
+
   - name: Enable IP forwarding
     sysctl:
       name: net.ipv4.ip_forward
       value: '1'
       sysctl_set: true
       state: present
+
   roles:
     - role: geerlingguy.pip
     - role: geerlingguy.containerd
@@ -73,6 +90,7 @@
           state: present
         - name: kubernetes-cni
           state: present
+
   post_tasks:
   - name: Configure Flannel networking for enp0s8
     shell: "curl {{ kubernetes_flannel_manifest_file }} | sed '/kube-subnet-mgr.*/a\\        - --iface=enp0s8' | kubectl apply -f -"
@@ -81,23 +99,28 @@
     when: kubernetes_pod_network.cni == 'flannel' and kubernetes_role == 'control_plane' and installation_method == 'vagrant'
     retries: 3
     delay: 5
+
   - name: Download crictl binary
     get_url:
       url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-amd64.tar.gz"
       dest: /tmp/crictl.tar.gz
+
   - name: Extract crictl binary
     ansible.builtin.unarchive:
       src: /tmp/crictl.tar.gz
       dest: /usr/local/bin
       remote_src: yes
+
   - name: Remove crictl archive
     ansible.builtin.file:
       path: /tmp/crictl.tar.gz
       state: absent
+
   - name: Create crictl configuration directory
     ansible.builtin.file:
       path: /etc/crictl.d
       state: directory
+
   - name: Configure crictl
     ansible.builtin.copy:
       content: |
