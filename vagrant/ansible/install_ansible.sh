@@ -1,6 +1,6 @@
 
 #!/bin/bash
-
+ENABLE_ZSH=true
 VERSION_STRING=2.9.10
 sudo apt -y update
 # sudo apt install -y python3 git curl wget 

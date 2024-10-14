@@ -6,8 +6,8 @@ sudo apt  -y install ansible
 # retrieve ansible code
 sudo apt  -y install git
 rm -Rf kubernetes-certification-stack || echo "previous folder removed"
-git clone -b v1.29 https://github.com/eazytraining/kubernetes-certification-stack.git
-cd kubernetes-certification-stack
+git clone -b ubuntu https://github.com/ulrich-sun/cursus-devops.git
+cd  cursus-devops/vagrant/kubernetes/
 KUBERNETES_VERSION=1.29.1
 ansible-galaxy install -r roles/requirements.yml
 if [ $1 == "master" ]
