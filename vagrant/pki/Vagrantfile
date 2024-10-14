@@ -1,6 +1,6 @@
 Vagrant.configure("2") do |config|
   config.vm.define "ca" do |ca|
-    ca.vm.box = "eazytrainingfr/centos7"
+    ca.vm.box = "ubuntu/focal64"
     ca.vm.hostname = "ca"
     ca.vm.provider "virtualbox" do |vb|
       vb.memory = "2048"
@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "webserver" do |webserver|
-    webserver.vm.box = "eazytrainingfr/centos7"
+    webserver.vm.box = "ubuntu/focal64"
     webserver.vm.hostname = "webserver"
     webserver.vm.provider "virtualbox" do |vb|
       vb.memory = "2048"
