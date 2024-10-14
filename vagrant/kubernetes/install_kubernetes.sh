@@ -8,7 +8,7 @@ sudo apt  -y install git
 rm -Rf kubernetes-certification-stack || echo "previous folder removed"
 git clone -b ubuntu https://github.com/ulrich-sun/cursus-devops.git
 cd  cursus-devops/vagrant/kubernetes/
-KUBERNETES_VERSION=1.29.1
+KUBERNETES_VERSION=1.31.1
 ansible-galaxy install -r roles/requirements.yml
 if [ $1 == "master" ]
 then
