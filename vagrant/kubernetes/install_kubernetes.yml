@@ -6,7 +6,6 @@
     kubernetes_pod_network:
       cni: 'flannel'
       cidr: '10.244.0.0/16'
-    kubernetes_apt_gpg_key: "https://packages.cloud.google.com/apt/doc/apt-key.gpg"
     kubernetes_version: "{{ kubernetes_version_ubuntu_package.split('.')[:2] | join('.') }}"
     kubernetes_kubelet_extra_args: "--node-ip={{ ansible_enp0s8.ipv4.address }}"
     crictl_version: "v1.30.0"
@@ -30,14 +29,26 @@
     kubernetes_allow_pods_on_master: true
 
   pre_tasks:
+  - name: Create keyrings directory
+    file:
+      path: /etc/apt/keyrings
+      state: directory
+      mode: '0755'
+
   - name: Add Kubernetes APT GPG key
-    apt_key:
-      url: "{{ kubernetes_apt_gpg_key }}"
-      state: present
+    get_url:
+      url: https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key
+      dest: /tmp/kubernetes-apt-keyring.gpg
+
+  - name: Import GPG key
+    command: gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg /tmp/kubernetes-apt-keyring.gpg
+    args:
+      removes: /tmp/kubernetes-apt-keyring.gpg
 
   - name: Add Kubernetes APT repository
-    apt_repository:
-      repo: "deb https://apt.kubernetes.io/ kubernetes-xenial main"
+    lineinfile:
+      path: /etc/apt/sources.list.d/kubernetes.list
+      line: 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /'
       state: present
 
   - name: Update all packages
