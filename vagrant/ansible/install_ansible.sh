@@ -1,21 +1,26 @@
 
 #!/bin/bash
-sudo yum -y update
-sudo yum -y install epel-release
-sudo yum install -y python3 git
+
+VERSION_STRING=2.9.6+dfsg-1
+sudo apt -y update
+# sudo apt install -y python3 git curl wget 
+sudo apt install software-properties-common -y
+sudo add-apt-repository ppa:ansible/ansible -y
+# sudo apt install ansible=$VERSION_STRING
+
 if [ $1 == "master" ]
 then
 
   # install ansible
   curl -sS https://bootstrap.pypa.io/pip/3.6/get-pip.py | sudo python3
-  /usr/local/bin/pip3 install ansible
-  yum install -y sshpass
+  /usr/local/bin/pip3 install ansible==$VERSION_STRING
+  apt install -y sshpass
   
   # Install zsh if needed
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
     then
       echo "We are going to install zsh"
-      sudo yum -y install zsh git
+      sudo apt -y install zsh git
       echo "vagrant" | chsh -s /bin/zsh vagrant
       su - vagrant  -c  'echo "Y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
       su - vagrant  -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
