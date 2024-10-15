@@ -1,16 +1,17 @@
 - hosts: localhost
   become: true
+
   vars:
     token: "783bde.3f89s0fje9f38fhf"
     swap_disabled: true
+    # The follow two parameter was explained here https://github.com/geerlingguy/ansible-role-kubernetes#variables-to-configure-kubeadm-and-kubelet-through-command-line-options
     kubernetes_pod_network:
       cni: 'flannel'
       cidr: '10.244.0.0/16'
-    kubernetes_version: "{{ kubernetes_version_ubuntu_package.split('.')[:2] | join('.') }}"
-    # kubernetes_version: "1.31"
-    kubernetes_apt_release_channel: "stable"  # Par exemple, "stable" ou "alpha"
-    kubernetes_apt_repository: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v{{ kubernetes_version }}/deb/ /"
-    kubernetes_apt_keyring_file: "/etc/apt/keyrings/kubernetes-apt-keyring.gpg"
+    kubernetes_apt_release_channel: "stable"
+    kubernetes_apt_keyring_file: "/etc/apt/keyrings/kubernetes-apt-keyring.asc"
+    kubernetes_apt_repository: "deb [signed-by={{ kubernetes_apt_keyring_file }}] https://pkgs.k8s.io/core:/{{ kubernetes_apt_release_channel }}:/v{{ kubernetes_version }}/deb/ /"
+    kubernetes_version: "{{ kubernetes_version_rhel_package.split('.')[:2]  | join('.') }}"
     kubernetes_kubelet_extra_args: "--node-ip={{ ansible_enp0s8.ipv4.address }}"
     crictl_version: "v1.30.0"
     kubernetes_config_kubelet_configuration:
@@ -20,6 +21,7 @@
       ipvs:
         strictARP: true
     kubernetes_config_init_configuration:
+      # details of these parameters could be found here https://pkg.go.dev/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm/v1beta1
       localAPIEndpoint:
         advertiseAddress: "{{ kubernetes_apiserver_advertise_address | default(ansible_default_ipv4.address, true) }}"
       bootstrapTokens:
@@ -32,7 +34,7 @@
           - system:bootstrappers:kubeadm:default-node-token
     kubernetes_allow_pods_on_master: true
   pre_tasks:
-  - name: Create keyrings directory
+    - name: Create keyrings directory
     file:
       path: /etc/apt/keyrings
       state: directory
@@ -62,11 +64,6 @@
         - ca-certificates
         - software-properties-common
       state: present
-  - name: Disable swap
-    shell: |
-      swapoff -a
-      sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
-    when: swap_disabled == true
   - name: Install NTP
     apt:
       name: ntp
@@ -80,19 +77,29 @@
       name: net.ipv4.ip_forward
       value: '1'
       sysctl_set: true
+      state: presen
+      
+  - name: Enable br_netfilter module
+    modprobe:
+      name: br_netfilter
       state: present
-  tasks:
-    - include_tasks: kubernetes_setup.yml
+    when: >
+      ansible_distribution != 'Debian' 
+  - name: disable swap
+    shell: |
+      swapon -a
+    when: swap_disabled == true
+      
   roles:
     - role: geerlingguy.pip
     - role: geerlingguy.containerd
     - role: geerlingguy.kubernetes
       kubernetes_packages:
-        - name: kubelet-{{ kubernetes_version_ubuntu_package }}
+        - name: kubelet-{{ kubernetes_version_rhel_package }}
           state: present
-        - name: kubectl-{{ kubernetes_version_ubuntu_package }}
+        - name: kubectl-{{ kubernetes_version_rhel_package }}
           state: present
-        - name: kubeadm-{{ kubernetes_version_ubuntu_package }}
+        - name: kubeadm-{{ kubernetes_version_rhel_package }}
           state: present
         - name: kubernetes-cni
           state: present
@@ -104,23 +111,28 @@
     when: kubernetes_pod_network.cni == 'flannel' and kubernetes_role == 'control_plane' and installation_method == 'vagrant'
     retries: 3
     delay: 5
+
   - name: Download crictl binary
     get_url:
       url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-amd64.tar.gz"
       dest: /tmp/crictl.tar.gz
+
   - name: Extract crictl binary
     ansible.builtin.unarchive:
       src: /tmp/crictl.tar.gz
       dest: /usr/local/bin
       remote_src: yes
+
   - name: Remove crictl archive
     ansible.builtin.file:
       path: /tmp/crictl.tar.gz
       state: absent
+
   - name: Create crictl configuration directory
     ansible.builtin.file:
       path: /etc/crictl.d
       state: directory
+
   - name: Configure crictl
     ansible.builtin.copy:
       content: |
@@ -129,4 +141,4 @@
         timeout: 2
         debug: true
         pull-image-on-create: false
-      dest: /etc/crictl.yaml
+      dest: /etc/crictl.yaml    
