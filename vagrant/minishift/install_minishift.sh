@@ -1,6 +1,5 @@
 #!/bin/bash
-yum -y update
-yum -y install epel-release
+sudo apt -y update
 
 if [ $1 == "minishift" ]
 then
@@ -29,14 +28,29 @@ else
         # Install docker
 
         #ref : https://github.com/mikenairn/minishift-vagrant
-        yum install -y docker net-tools
+        VERSION_STRING="5:20.10.0~3-0~ubuntu-focal"
+        ENABLE_ZSH=true
 
-        groupadd docker || true
-        usermod -aG docker vagrant || true
+        # Add Docker's official GPG key:
+        sudo apt-get update
+        sudo apt-get install ca-certificates curl net-tools  -y
+        sudo install -m 0755 -d /etc/apt/keyrings
+        sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+        sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-        systemctl restart docker || true
-        systemctl enable docker || true
+        # Add the repository to Apt sources:
+        echo \
+        "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+        $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+        sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-        yum install -y sshpass
+        sudo apt-get update
+        sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin -y
+        sudo systemctl start docker
+        sudo systemctl enable docker
+        sudo usermod -aG docker vagrant
+        sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
+
+        sudo apt install -y sshpass
         echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
 fi

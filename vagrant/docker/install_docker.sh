@@ -1,21 +1,22 @@
 #!/bin/bash
-DOCKER_VERSION="3:19.03.2-3.el7"
+VERSION_STRING="5:20.10.0~3-0~ubuntu-focal"
 ENABLE_ZSH=true
 
-# Mise à jour du système et remplacement des dépôts
-sudo sed -i -e 's/mirror.centos.org/vault.centos.org/g' \
-           -e 's/^#.*baseurl=http/baseurl=http/g' \
-           -e 's/^mirrorlist=http/#mirrorlist=http/g' \
-           /etc/yum.repos.d/*.repo
-sudo yum -y update
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl -y
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
 
-# Installation des paquets nécessaires
-sudo yum install -y yum-utils git wget curl iptables iptables-services
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
-# Installation de Docker
-sudo yum remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
-sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 
+sudo apt-get update
+sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin -y
 sudo systemctl start docker
 sudo systemctl enable docker
 sudo usermod -aG docker vagrant
@@ -24,7 +25,7 @@ sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
 then
     echo "We are going to install zsh"
-    sudo yum -y install zsh git
+    sudo apt -y install zsh git
     echo "vagrant" | chsh -s /bin/zsh vagrant
     su - vagrant  -c  'echo "Y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
     su - vagrant  -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"

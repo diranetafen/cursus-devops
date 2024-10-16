@@ -1,19 +1,31 @@
 #!/bin/bash
-sudo yum -y update
+VERSION_STRING="5:20.10.0~3-0~ubuntu-focal"
+ENABLE_ZSH=true
 
-# install docker
-sudo yum install -y git python3 epel-release
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-sudo usermod -aG docker vagrant
-sudo systemctl enable docker
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl -y
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
+sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin -y
 sudo systemctl start docker
+sudo systemctl enable docker
+sudo usermod -aG docker vagrant
 sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 #Install ansible 
 curl -sS https://bootstrap.pypa.io/pip/3.6/get-pip.py | sudo python3
 /usr/local/bin/pip3 install ansible
-yum install -y sshpass
+apt install -y sshpass
 git clone https://github.com/diranetafen/cursus-devops.git
 cd cursus-devops/ansible
 /usr/local/bin/ansible-galaxy install -r roles/requirements.yml

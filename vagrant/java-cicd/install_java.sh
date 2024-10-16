@@ -1,20 +1,37 @@
 #!/bin/sh
-sudo yum -y update
+
+VERSION_STRING="5:20.10.0~3-0~ubuntu-focal"
+ENABLE_ZSH=true
+sudo apt install -y git curl wget
 
 # Install docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sh get-docker.sh
-sudo usermod -aG docker vagrant
+for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
+
+# Add Docker's official GPG key:
+sudo apt-get install ca-certificates -y
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
+
+usermod -aG docker vagrant
 systemctl enable docker
-sudo systemctl start docker
-yum install -y sshpass
+systemctl start docker
+sudo apt install -y sshpass
 
 # Install epel-release,firefox,  git, java
-sudo yum -y install epel-release git java-11-openjdk-devel
+sudo apt -y install epel-release git java-11-openjdk-devel
 
 # Installation de maven 3.8
 cd /usr/local/src/
-sudo yum install wget -y
+sudo apt install wget -y
 wget https://downloads.apache.org/maven/maven-3/3.8.5/binaries/apache-maven-3.8.5-bin.tar.gz 
 tar -xvf apache-maven-3.8.5-bin.tar.gz 
 mv apache-maven-3.8.5 /usr/local/maven/

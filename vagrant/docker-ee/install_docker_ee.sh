@@ -1,33 +1,31 @@
 
 #!/bin/bash
-
-yum -y update
-yum -y install epel-release
+VERSION_STRING="5:20.10.0~3-0~ubuntu-focal"
+ENABLE_ZSH=true
+apt update -y
 
 # Install docker
-yum remove -y docker\
-  docker-client\
-  docker-client-latest\
-  docker-common\
-  docker-latest\
-  docker-latest-logrotate\
-  docker-logrotate\
-  docker-selinux\
-  docker-engine-selinux\
-  docker-engine\
-  docker-ce
+for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do sudo apt-get remove $pkg; done
 
-rm /etc/yum.repos.d/docker*.repo || echo "not found"
-echo "https://storebits.docker.com/ee/trial/sub-76c16081-298d-4950-8d02-7f5179771813/centos" >/etc/yum/vars/dockerurl
-echo "7" > /etc/yum/vars/dockerosversion
-yum install -y yum-utils device-mapper-persistent-data lvm2
-yum-config-manager --add-repo "https://storebits.docker.com/ee/trial/sub-76c16081-298d-4950-8d02-7f5179771813/centos/docker-ee.repo"
-yum -y install docker-ee
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install ca-certificates curl -y
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin
 
 usermod -aG docker vagrant
 systemctl enable docker
 systemctl start docker
-yum install -y sshpass
+sudo apt install -y sshpass
 
 if [ $1 == "master" ]
 then

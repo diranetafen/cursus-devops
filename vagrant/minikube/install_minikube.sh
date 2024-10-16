@@ -1,104 +1,86 @@
 #!/bin/bash
-
-set -e
-set -o pipefail
-export ENABLE_ZSH=true
-
-# Variables
 ENABLE_ZSH=true
-MINIKUBE_VERSION="v1.34.0"
-CRICTL_VERSION="v1.31.0"
-GO_VERSION="1.21.1"
-CNI_VERSION="v1.5.1"
-KUBERNETES_VERSION="1.31.1"
-
-# Mise à jour du système et remplacement des dépôts
-sudo sed -i -e 's/mirror.centos.org/vault.centos.org/g' \
-           -e 's/^#.*baseurl=http/baseurl=http/g' \
-           -e 's/^mirrorlist=http/#mirrorlist=http/g' \
-           /etc/yum.repos.d/*.repo
-sudo yum -y update
+# Mise à jour du système
+sudo apt update
+sudo apt upgrade -y
 
 # Installation des paquets nécessaires
-sudo yum install -y yum-utils git wget curl iptables iptables-services
+sudo apt install -y apt-transport-https ca-certificates curl
 
 # Installation de Docker
-sudo yum remove -y docker docker-client docker-client-latest docker-common docker-latest docker-latest-logrotate docker-logrotate docker-engine || true
-sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt install -y docker.io
 sudo systemctl start docker
 sudo systemctl enable docker
-sudo usermod -aG docker vagrant
-sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 
 # Installation de Minikube
+MINIKUBE_VERSION="latest"
 curl -LO "https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/minikube-linux-amd64"
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
 # Installation de kubeadm, kubectl et kubelet
-sudo setenforce 0
-sudo sed -i 's/^SELINUX=enforcing$/SELINUX=permissive/' /etc/selinux/config
+# sudo snap install kubeadm --classic
+# sudo snap install kubectl --classic
+# sudo snap install kubelet --classic
 
-cat <<EOF | sudo tee /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/v1.31/rpm/
-enabled=1
-gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key
-exclude=kubelet kubeadm kubectl cri-tools kubernetes-cni
-EOF
+# sudo systemctl start kubelet
+# sudo systemctl enable kubelet
+sudo apt-get update
 
-sudo yum install -y kubelet-${KUBERNETES_VERSION} kubeadm-${KUBERNETES_VERSION} kubectl-${KUBERNETES_VERSION} --disableexcludes=kubernetes
+# apt-transport-https may be a dummy package; if so, you can skip that package
 
-#sudo yum install -y kubelet kubeadm kubectl --disableexcludes=kubernetes
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+# If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
+
+sudo mkdir -p -m 755 /etc/apt/keyrings
+
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+
+sudo apt-get install -y kubelet kubeadm kubectl
+
+sudo apt-mark hold kubelet kubeadm kubectl
 sudo systemctl enable --now kubelet
 
 # Installation de conntrack
-sudo yum install -y conntrack-tools
+sudo apt install -y conntrack
 
 # Installation de crictl
+CRICTL_VERSION="v1.31.0"
 curl -LO "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-amd64.tar.gz"
 tar -zxvf "crictl-${CRICTL_VERSION}-linux-amd64.tar.gz"
 sudo mv crictl /usr/local/bin/
 
+# Mise à jour et installation de Git et Build Essentials
+sudo apt update
+sudo apt install -y git build-essential
+
 # Installation de Go
+GO_VERSION="1.21.1"
 wget "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz"
 sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
 echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.profile
 source ~/.profile
 
 # Installation des plugins CNI
+CNI_VERSION="v1.5.1"
 curl -LO "https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-linux-amd64-${CNI_VERSION}.tgz"
 sudo mkdir -p /opt/cni/bin
 sudo tar -C /opt/cni/bin -xzvf "cni-plugins-linux-amd64-${CNI_VERSION}.tgz"
 
 # Installation de cri-dockerd
-# Définir les variables
-CRIDOCKERD_VERSION="0.3.15"
-ARCH="amd64"
-RELEASE_URL="https://github.com/Mirantis/cri-dockerd/releases/download/v${CRIDOCKERD_VERSION}/cri-dockerd-${CRIDOCKERD_VERSION}.${ARCH}.tgz"
-TAR_FILE="cri-dockerd-${CRIDOCKERD_VERSION}.${ARCH}.tgz"
-EXTRACTED_DIR="cri-dockerd"
-DESTINATION="/usr/local/bin/cri-dockerd"
-
-# Télécharger le fichier
-wget ${RELEASE_URL}
-
-# Extraire le fichier tar
-tar -xvf ${TAR_FILE}
-
-# Déplacer le binaire dans le répertoire /usr/local/bin
-sudo mv ${EXTRACTED_DIR}/cri-dockerd ${DESTINATION}
-
-# Donner les permissions d'exécution
-sudo chmod +x ${DESTINATION}
+wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.15/cri-dockerd-0.3.15.amd64.tgz
+tar -xvf cri-dockerd-0.3.15.amd64.tgz
+mv cri-dockerd/cri-dockerd /usr/local/bin/
+sudo chmod +x /usr/local/bin/cri-dockerd
 
 # Installation de socat
-sudo yum install -y socat
-
-# Création des fichiers de service systemd
-cat <<EOF | sudo tee /etc/systemd/system/cri-dockerd.service
+sudo apt-get install -y socat
+# Créer et écrire dans /etc/systemd/system/cri-dockerd.service
+sudo bash -c 'cat <<EOF > /etc/systemd/system/cri-dockerd.service
 [Unit]
 Description=CRI for Docker
 Documentation=https://github.com/Mirantis/cri-dockerd
@@ -112,9 +94,17 @@ RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
-EOF
+EOF'
 
-cat <<EOF | sudo tee /etc/systemd/system/cri-docker.socket
+# Recharger les définitions des services
+sudo systemctl daemon-reload
+
+# Activer et démarrer cri-dockerd.service
+sudo systemctl enable cri-dockerd.service
+sudo systemctl start cri-dockerd.service
+
+# Créer et écrire dans /etc/systemd/system/cri-docker.socket
+sudo bash -c 'cat <<EOF > /etc/systemd/system/cri-docker.socket
 [Unit]
 Description=Socket for CRI for Docker
 
@@ -124,43 +114,57 @@ Accept=yes
 
 [Install]
 WantedBy=sockets.target
-EOF
+EOF'
 
 # Recharger les définitions des services
 sudo systemctl daemon-reload
 
-# Activer et démarrer les services
-sudo systemctl enable --now cri-dockerd.service
-sudo systemctl enable --now cri-docker.socket
+# Activer et démarrer cri-docker.socket
+sudo systemctl enable cri-docker.socket
+sudo systemctl start cri-docker.socket
 
-# Démarrer Minikube
-#minikube start --driver=none --kubernetes-version v1.31.1
-su - vagrant -c "minikube start --driver=none --kubernetes-version v${KUBERNETES_VERSION}"
-sudo yum install bash-completion -y
-echo 'source <(kubectl completion bash)' >> ~vagrant/.bashrc
-echo 'alias k=kubectl' >> ~vagrant/.bashrc
-echo 'complete -F __start_kubectl k' >> ~vagrant/.bashrc
+# Créer et écrire dans /etc/systemd/system/cri-docker.service
+sudo bash -c 'cat <<EOF > /etc/systemd/system/cri-docker.service
+[Unit]
+Description=CRI for Docker
+Documentation=https://github.com/Mirantis/cri-dockerd
+After=docker.service
+Requires=docker.service
 
+[Service]
+ExecStart=/usr/local/bin/cri-dockerd
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF'
+
+# Recharger les définitions des services
+sudo systemctl daemon-reload
+
+# Activer et démarrer cri-docker.service
+sudo systemctl enable cri-docker.service
+sudo systemctl start cri-docker.service
+
+# Assurer que cri-docker.socket est démarré
+sudo systemctl start cri-docker.socket
+minikube start --driver=none
+
+  # Install zsh if needed
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
-then
-    echo "We are going to install zsh"
-    sudo yum -y install zsh git
-    echo "vagrant" | chsh -s /bin/zsh vagrant
-    su - vagrant  -c  'echo "Y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
-    su - vagrant  -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-    sed -i 's/^plugins=/#&/' /home/vagrant/.zshrc
-    echo "plugins=(git docker docker-compose helm kubectl kubectx minikube colored-man-pages aliases copyfile  copypath dotenv zsh-syntax-highlighting jsontools)" >> /home/vagrant/.zshrc
-    sed -i "s/^ZSH_THEME=.*/ZSH_THEME='agnoster'/g"  /home/vagrant/.zshrc
-else
-    echo "The zsh is not installed on this server"
+    then
+      echo "We are going to install zsh"
+      sudo apt -y install zsh git
+      echo "vagrant" | chsh -s /bin/zsh vagrant
+      su - vagrant  -c  'echo "Y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+      su - vagrant  -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+      sed -i 's/^plugins=/#&/' /home/vagrant/.zshrc
+      echo "plugins=(git  colored-man-pages aliases copyfile  copypath zsh-syntax-highlighting jsontools)" >> /home/vagrant/.zshrc
+      sed -i "s/^ZSH_THEME=.*/ZSH_THEME='agnoster'/g"  /home/vagrant/.zshrc
+    else
+      echo "The zsh is not installed on this server"
+  fi
+
 fi
-
-
-IS_MINIKUBE_UP=$(curl -k https://localhost:8443/livez?verbose | grep -i "livez check passed")
-
-if [[ ($IS_MINIKUBE_UP == "livez check passed") ]]
-then
-    echo -e "Everything is Good, minikube is ready. \nFor this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
-else
-    echo "Error, your minikube server (Kubernetes) is not running"
-fi
+echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"

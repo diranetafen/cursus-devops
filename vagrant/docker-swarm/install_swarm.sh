@@ -1,13 +1,12 @@
 
 #!/bin/bash
-yum -y update
-yum -y install epel-release
-
+apt -y update
+ENABLE_ZSH=true
 # ENABLE TOOLS
-DOCKER=19.03 # supported value [ON, OFF, X.X]
+DOCKER="5:20.10.0~3-0~ubuntu-focal" # supported value [ON, OFF, X.X]
 
 # install docker
-sudo yum install -y git
+sudo apt install -y git
 # Install docker
 case $DOCKER in
   ON)
@@ -28,7 +27,7 @@ case $DOCKER in
     sudo systemctl start docker
     ;;
 esac
-yum install -y sshpass
+apt install -y sshpass
 
 if [ $1 == "master" ]
 then

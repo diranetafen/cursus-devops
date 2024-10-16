@@ -1,16 +1,20 @@
 #!/bin/bash
+VERSION_STRING=7.8.0
 echo "###################################################"
 echo "Install Puppet requirements"
 echo "###################################################"
 yum -y update
-yum -y install epel-release
-yum install -y https://yum.puppet.com/puppet-release-el-8.noarch.rpm
+sudo apt install -y wget apt-transport-https
+wget https://apt.puppetlabs.com/puppet7-release-focal.deb
+sudo dpkg -i puppet7-release-focal.deb
+
 if [ $1 == "master" ]
 then
         echo "###################################################"
         echo "Start Master Puppet Installation"
         echo "###################################################"
-        yum install -y puppetserver-7.2.1-1.el8.noarch
+        sudo apt install -y puppet=$VERSION_STRING
+        sudo apt-mark hold puppet
         echo "127.0.2.1 puppet puppetdb puppet.home" >> /etc/hosts
         systemctl enable --now puppetserver puppet
         systemctl enable --now firewalld
