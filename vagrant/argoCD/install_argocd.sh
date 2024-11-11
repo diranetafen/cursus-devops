@@ -13,7 +13,7 @@ sudo systemctl start docker
 sudo systemctl enable docker
 
 # Installation de Minikube
-MINIKUBE_VERSION="latest"
+MINIKUBE_VERSION="v1.34.0"
 curl -LO "https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/minikube-linux-amd64"
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
