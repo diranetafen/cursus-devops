@@ -1,0 +1,18 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.define "python" do |python|
+    python.vm.box = "fasmat/ubuntu2004-desktop"
+    python.vm.network "private_network", type: "dhcp"
+    python.vm.hostname = "python"
+    python.vm.provider "virtualbox" do |v|
+      v.name = "python"
+      v.memory = 4096
+      v.cpus = 2
+    end
+    python.vm.provision :shell do |shell|
+      shell.path = "install_python.sh"
+    end
+  end
+end
