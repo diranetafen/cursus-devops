@@ -1,16 +1,33 @@
 #!/bin/bash
+VERSION_STRING="5:23.0.6-1~ubuntu.20.04~focal"
 ENABLE_ZSH=true
+
 # Mise à jour du système
 sudo apt update
 sudo apt upgrade -y
 
 # Installation des paquets nécessaires
-sudo apt install -y apt-transport-https ca-certificates curl
+
+# Add Docker's official GPG key:
+sudo apt-get update
+sudo apt-get install -y apt-transport-https ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 # Installation de Docker
-sudo apt install -y docker.io
-sudo systemctl start docker
+sudo apt-get update
+sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING containerd.io docker-buildx-plugin docker-compose-plugin -y
 sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker vagrant
+sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 
 # Installation de Minikube
 MINIKUBE_VERSION="v1.34.0"
