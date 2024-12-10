@@ -2,7 +2,8 @@
 sudo apt -y update
 ENABLE_ZSH=true
 # ENABLE TOOLS
-DOCKER="5:20.10.0~3-0~ubuntu-focal" # supported value [ON, OFF, X.X]
+# DOCKER="5:20.10.0~3-0~ubuntu-focal" # supported value [ON, OFF, X.X]
+DOCKER="5:23.0.6-1~ubuntu.20.04~focal"
 
 # install docker
 sudo apt install -y git

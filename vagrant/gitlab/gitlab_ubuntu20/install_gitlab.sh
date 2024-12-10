@@ -1,5 +1,6 @@
 #!/bin/bash
-VERSION_STRING="5:20.10.0~3-0~ubuntu-focal"
+# VERSION_STRING="5:20.10.0~3-0~ubuntu-focal"
+VERSION_STRING="5:23.0.6-1~ubuntu.20.04~focal"
 ENABLE_ZSH=true
 
 # Add Docker's official GPG key:
