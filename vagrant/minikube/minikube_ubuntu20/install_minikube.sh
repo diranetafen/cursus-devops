@@ -166,7 +166,16 @@ sudo systemctl start cri-docker.service
 
 # Assurer que cri-docker.socket est démarré
 sudo systemctl start cri-docker.socket
+
+# Démarrer Minikube
 minikube start --driver=none
+
+#Installer l'auto-complétion
+sudo apt update
+sudo apt install bash-completion -y
+echo 'source <(kubectl completion bash)' >> ~vagrant/.bashrc
+echo 'alias k=kubectl' >> ~vagrant/.bashrc
+echo 'complete -F __start_kubectl k' >> ~vagrant/.bashrc
 
   # Install zsh if needed
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
