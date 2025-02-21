@@ -9,8 +9,8 @@
     >> [AMD64](https://releases.hashicorp.com/vagrant/2.4.1/vagrant_2.4.1_darwin_amd64.dmg)
     >> [ARM 64](https://releases.hashicorp.com/vagrant/2.4.1/vagrant_2.4.1_darwin_arm64.dmg)
  - Debian / Ubuntu :
-     >> [64 bits](https://releases.hashicorp.com/vagrant/2.4.1/vagrant_2.4.1-1_amd64.deb) 
-     >> [32 bits](https://releases.hashicorp.com/vagrant/2.4.1/vagrant_2.4.1-1_i686.deb)
+     > [64 bits](https://releases.hashicorp.com/vagrant/2.4.1/vagrant_2.4.1-1_amd64.deb)  ||
+     > [32 bits](https://releases.hashicorp.com/vagrant/2.4.1/vagrant_2.4.1-1_i686.deb)
 
 ## Recommended VirtualBox Version: [7.0.20](https://www.virtualbox.org/wiki/Download_Old_Builds_7_0)
 
