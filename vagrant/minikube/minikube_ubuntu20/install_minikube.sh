@@ -171,7 +171,7 @@ sudo systemctl start cri-docker.service
 sudo systemctl start cri-docker.socket
 
 # Démarrer Minikube
-minikube start --kubernetes-version v1.32.0 --driver=none
+minikube start --kubernetes-version ${KUBERNETES_VERSION}.0 --driver=none
 
 #Installer l'auto-complétion
 sudo apt update
