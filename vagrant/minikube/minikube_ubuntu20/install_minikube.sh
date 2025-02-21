@@ -1,6 +1,11 @@
 #!/bin/bash
 VERSION_STRING="5:23.0.6-1~ubuntu.20.04~focal"
 ENABLE_ZSH=true
+MINIKUBE_VERSION="v1.35.0"
+KUBERNETES_VERSION="v1.32"
+CRICTL_VERSION="v1.31.0"
+GO_VERSION="1.21.1"
+CNI_VERSION="v1.5.1"
 
 # Mise à jour du système
 sudo apt update
@@ -30,7 +35,6 @@ sudo usermod -aG docker vagrant
 sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 
 # Installation de Minikube
-MINIKUBE_VERSION="v1.34.0"
 curl -LO "https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/minikube-linux-amd64"
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
@@ -50,10 +54,12 @@ sudo apt-get install -y apt-transport-https ca-certificates curl gpg
 
 sudo mkdir -p -m 755 /etc/apt/keyrings
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+# Repository configuration for Kubernetes 1.32
+
+curl -fsSL https://pkgs.k8s.io/core:/stable:/${KUBERNETES_VERSION}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 # This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
 
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${KUBERNETES_VERSION}/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 sudo apt-get update
 
@@ -66,7 +72,6 @@ sudo systemctl enable --now kubelet
 sudo apt install -y conntrack
 
 # Installation de crictl
-CRICTL_VERSION="v1.31.0"
 curl -LO "https://github.com/kubernetes-sigs/cri-tools/releases/download/${CRICTL_VERSION}/crictl-${CRICTL_VERSION}-linux-amd64.tar.gz"
 tar -zxvf "crictl-${CRICTL_VERSION}-linux-amd64.tar.gz"
 sudo mv crictl /usr/local/bin/
@@ -76,14 +81,12 @@ sudo apt update
 sudo apt install -y git build-essential
 
 # Installation de Go
-GO_VERSION="1.21.1"
 wget "https://golang.org/dl/go${GO_VERSION}.linux-amd64.tar.gz"
 sudo tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
 echo "export PATH=\$PATH:/usr/local/go/bin" >> ~/.profile
 source ~/.profile
 
 # Installation des plugins CNI
-CNI_VERSION="v1.5.1"
 curl -LO "https://github.com/containernetworking/plugins/releases/download/${CNI_VERSION}/cni-plugins-linux-amd64-${CNI_VERSION}.tgz"
 sudo mkdir -p /opt/cni/bin
 sudo tar -C /opt/cni/bin -xzvf "cni-plugins-linux-amd64-${CNI_VERSION}.tgz"
@@ -168,7 +171,7 @@ sudo systemctl start cri-docker.service
 sudo systemctl start cri-docker.socket
 
 # Démarrer Minikube
-minikube start --driver=none
+minikube start --kubernetes-version v1.32.0 --driver=none
 
 #Installer l'auto-complétion
 sudo apt update
