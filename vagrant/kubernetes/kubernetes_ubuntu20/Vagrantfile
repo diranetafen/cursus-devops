@@ -29,7 +29,7 @@ nodes:
     cpu: 2
     memory: 2048
   workers:
-    count: 2
+    count: 1
     cpu: 1
     memory: 2048
 # Mount additional shared folders from the host into each virtual machine.
@@ -43,7 +43,7 @@ software:
   calico: 3.26.0
   # To skip the dashboard installation, set its version to an empty value or comment it out:
   dashboard: 2.7.0
-  kubernetes: 1.31.0-*
+  kubernetes: 1.32.0-*
 
   os: xUbuntu_24.04
 YAML
@@ -74,8 +74,8 @@ Vagrant.configure("2") do |config|
   end
   config.vm.box_check_update = true
 
-  config.vm.define "controlplane" do |controlplane|
-    controlplane.vm.hostname = "controlplane"
+  config.vm.define "master" do |controlplane|
+    controlplane.vm.hostname = "master"
     controlplane.vm.network "private_network", ip: settings["network"]["control_ip"]
     if settings["shared_folders"]
       settings["shared_folders"].each do |shared_folder|
@@ -118,8 +118,8 @@ Vagrant.configure("2") do |config|
 
   (1..NUM_WORKER_NODES).each do |i|
 
-    config.vm.define "node0#{i}" do |node|
-      node.vm.hostname = "node0#{i}"
+    config.vm.define "worker#{i}" do |node|
+      node.vm.hostname = "worker#{i}"
       node.vm.network "private_network", ip: IP_NW + "#{IP_START + i}"
       if settings["shared_folders"]
         settings["shared_folders"].each do |shared_folder|

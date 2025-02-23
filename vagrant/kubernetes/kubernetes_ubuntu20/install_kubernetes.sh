@@ -4,7 +4,6 @@
 ROLE=$1
 #MASTER_IP=$2
 #TOKEN_FILE="/vagrant/kube_token_info.txt"
-# KUBERNETES_VERSION="1.31.1"
 
 # Common setup for all servers (Control Plane and Nodes)
 

@@ -30,35 +30,28 @@ sudo usermod -aG docker vagrant
 sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 
 # Installation de Minikube
-MINIKUBE_VERSION="v1.34.0"
+MINIKUBE_VERSION="v1.35.0"
 curl -LO "https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/minikube-linux-amd64"
 sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
 # Installation de kubeadm, kubectl et kubelet
-# sudo snap install kubeadm --classic
-# sudo snap install kubectl --classic
-# sudo snap install kubelet --classic
-
-# sudo systemctl start kubelet
-# sudo systemctl enable kubelet
 sudo apt-get update
 
-# apt-transport-https may be a dummy package; if so, you can skip that package
-
 sudo apt-get install -y apt-transport-https ca-certificates curl gpg
-# If the directory `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
 
 sudo mkdir -p -m 755 /etc/apt/keyrings
 
-curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-# This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.32/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+# Configuration du dépôt pour Kubernetes 1.32
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.32/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
 sudo apt-get update
 
+# Installation des composants Kubernetes
 sudo apt-get install -y kubelet kubeadm kubectl
 
+# Empêcher les mises à jour automatiques de kubelet, kubeadm et kubectl
 sudo apt-mark hold kubelet kubeadm kubectl
 sudo systemctl enable --now kubelet
 
@@ -96,7 +89,8 @@ sudo chmod +x /usr/local/bin/cri-dockerd
 
 # Installation de socat
 sudo apt-get install -y socat
-# Créer et écrire dans /etc/systemd/system/cri-dockerd.service
+
+# Créer et configurer les fichiers systemd pour cri-dockerd
 sudo bash -c 'cat <<EOF > /etc/systemd/system/cri-dockerd.service
 [Unit]
 Description=CRI for Docker
@@ -140,48 +134,27 @@ sudo systemctl daemon-reload
 sudo systemctl enable cri-docker.socket
 sudo systemctl start cri-docker.socket
 
-# Créer et écrire dans /etc/systemd/system/cri-docker.service
-sudo bash -c 'cat <<EOF > /etc/systemd/system/cri-docker.service
-[Unit]
-Description=CRI for Docker
-Documentation=https://github.com/Mirantis/cri-dockerd
-After=docker.service
-Requires=docker.service
+minikube start --kubernetes-version v1.32.0 --driver=none
 
-[Service]
-ExecStart=/usr/local/bin/cri-dockerd
-Restart=always
-RestartSec=5
+# Installer et Configurer l'auto-completion
+sudo apt-get update
+sudo apt install bash-completion -y
+echo 'source <(kubectl completion bash)' >> ~vagrant/.bashrc
+echo 'alias k=kubectl' >> ~vagrant/.bashrc
+echo 'complete -F __start_kubectl k' >> ~vagrant/.bashrc
 
-[Install]
-WantedBy=multi-user.target
-EOF'
-
-# Recharger les définitions des services
-sudo systemctl daemon-reload
-
-# Activer et démarrer cri-docker.service
-sudo systemctl enable cri-docker.service
-sudo systemctl start cri-docker.service
-
-# Assurer que cri-docker.socket est démarré
-sudo systemctl start cri-docker.socket
-minikube start --driver=none
-
-  # Install zsh if needed
-if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
-    then
-      echo "We are going to install zsh"
-      sudo apt -y install zsh git
-      echo "vagrant" | chsh -s /bin/zsh vagrant
-      su - vagrant  -c  'echo "Y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
-      su - vagrant  -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
-      sed -i 's/^plugins=/#&/' /home/vagrant/.zshrc
-      echo "plugins=(git  colored-man-pages aliases copyfile  copypath zsh-syntax-highlighting jsontools)" >> /home/vagrant/.zshrc
-      sed -i "s/^ZSH_THEME=.*/ZSH_THEME='agnoster'/g"  /home/vagrant/.zshrc
-    else
-      echo "The zsh is not installed on this server"
-  fi
-
+# Install zsh if needed
+if [[ -n "$ENABLE_ZSH"  &&  $ENABLE_ZSH == "true" ]]; then
+  echo "We are going to install zsh"
+  sudo apt -y install zsh git
+  echo "vagrant" | chsh -s /bin/zsh vagrant
+  su - vagrant  -c  'echo "Y" | sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+  su - vagrant  -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
+  sed -i 's/^plugins=/#&/' /home/vagrant/.zshrc
+  echo "plugins=(git  colored-man-pages aliases copyfile  copypath zsh-syntax-highlighting jsontools)" >> /home/vagrant/.zshrc
+  sed -i "s/^ZSH_THEME=.*/ZSH_THEME='agnoster'/g"  /home/vagrant/.zshrc
+else
+  echo "The zsh is not installed on this server"
 fi
+
 echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
