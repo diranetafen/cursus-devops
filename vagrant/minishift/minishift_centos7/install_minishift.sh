@@ -2,7 +2,7 @@
 yum -y update
 yum -y install epel-release
 
-if [ $1 == "minishifts" ]
+if [ $1 == "minishift" ]
 then
         echo "###################################################"
         echo "Install minishift"
