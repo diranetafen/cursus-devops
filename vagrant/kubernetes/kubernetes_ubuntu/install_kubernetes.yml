@@ -1,0 +1,117 @@
+---
+- hosts: localhost
+  become: true
+
+  vars:
+    # kubernetes_version: '1.32'
+    kubernetes_version: "{{ kubernetes_version_ubuntu_package.split('.')[:2]  | join('.') }}"
+    kubernetes_role: control_plane
+    crictl_version: "v1.30.0"
+    kubernetes_kubelet_extra_args: "--node-ip={{ ansible_enp0s8.ipv4.address }}"
+    kubernetes_kubeadm_init_extra_opts: ""
+    kubernetes_join_command_extra_opts: ""
+    kubernetes_allow_pods_on_control_plane: true
+    token: "783bde.3f89s0fje9f38fhf"
+    swap_disabled: true
+    kubernetes_pod_network:
+      # Flannel CNI.
+      cni: 'flannel'
+      cidr: '10.244.0.0/16'
+    kubernetes_kubeadm_kubelet_config_file_path: '/etc/kubernetes/kubeadm-kubelet-config.yaml'
+    kubernetes_config_kubelet_configuration:
+      cgroupDriver: "systemd"
+
+    kubernetes_config_init_configuration:
+      localAPIEndpoint:
+        advertiseAddress: "{{ kubernetes_apiserver_advertise_address | default(ansible_default_ipv4.address, true) }}"
+      bootstrapTokens:
+        - token: "{{ token }}"
+          description: "another bootstrap token"
+          usages:
+          - authentication
+          - signing
+          groups:
+          - system:bootstrappers:kubeadm:default-node-token
+    kubernetes_allow_pods_on_master: true
+    # if you use the next lines, remove the command line argument below
+    # nodeRegistration:
+    #    ignorePreflightErrors:
+    #      - all
+
+    kubernetes_config_cluster_configuration:
+      networking:
+        podSubnet: "{{ kubernetes_pod_network.cidr }}"
+      kubernetesVersion: "{{ kubernetes_version_kubeadm }}"
+
+    kubernetes_config_kube_proxy_configuration: {}
+
+    kubernetes_apiserver_advertise_address: ''
+    kubernetes_version_kubeadm: 'stable-{{ kubernetes_version }}'
+    kubernetes_ignore_preflight_errors: 'all'
+
+    kubernetes_apt_release_channel: "stable"
+    kubernetes_apt_repository: "https://pkgs.k8s.io/core:/{{ kubernetes_apt_release_channel }}:/v{{ kubernetes_version }}/deb/"
+
+    # Flannel config file.
+    kubernetes_flannel_manifest_file: https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
+    # Calico config file.
+    kubernetes_calico_manifest_file: https://projectcalico.docs.tigera.io/manifests/calico.yaml
+
+
+    procps_package: procps
+    kubelet_environment_file_path: /etc/default/kubelet
+
+  roles: 
+    - role: geerlingguy.kubernetes
+    - role: geerlingguy.containerd
+    - role: geerlingguy.pip
+      kubernetes_packages:
+        - name: kubelet-{{ kubernetes_version }}
+          state: present
+        - name: kubectl-{{ kubernetes_version }}
+          state: present
+        - name: kubeadm-{{ kubernetes_version }}
+          state: present
+        - name: kubernetes-cni
+          state: present
+  post_tasks:
+  - name: Configure Flannel networking for enp0s8
+    shell: "curl {{ kubernetes_flannel_manifest_file }} | sed '/kube-subnet-mgr.*/a\\        - --iface=enp0s8' | kubectl apply -f -"
+    register: flannel_result
+    changed_when: "'created' in flannel_result.stdout"
+    when: kubernetes_pod_network.cni == 'flannel' and kubernetes_role == 'control_plane' and installation_method == 'vagrant'
+    retries: 3
+    delay: 5
+
+  - name: Download crictl binary
+    get_url:
+      url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/{{ crictl_version }}/crictl-{{ crictl_version }}-linux-amd64.tar.gz"
+      dest: /tmp/crictl.tar.gz
+
+  - name: Extract crictl binary
+    ansible.builtin.unarchive:
+      src: /tmp/crictl.tar.gz
+      dest: /usr/local/bin
+      remote_src: yes
+
+  - name: Remove crictl archive
+    ansible.builtin.file:
+      path: /tmp/crictl.tar.gz
+      state: absent
+
+  - name: Create crictl configuration directory
+    ansible.builtin.file:
+      path: /etc/crictl.d
+      state: directory
+
+  - name: Configure crictl
+    ansible.builtin.copy:
+      content: |
+        runtime-endpoint: unix:///var/run/containerd/containerd.sock
+        image-endpoint: unix:///var/run/containerd/containerd.sock
+        timeout: 2
+        debug: true
+        pull-image-on-create: false
+      dest: /etc/crictl.yaml    
+
