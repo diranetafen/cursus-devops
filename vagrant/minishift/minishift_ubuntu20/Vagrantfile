@@ -6,7 +6,8 @@ Vagrant.configure("2") do |config|
     openshift.vm.disk :disk, size: "50GB", primary: true
     openshift.vm.box = "eazytrainingfr/ubuntu"
     openshift.vm.box_version = "1.0"
-    openshift.vm.network "private_network", type: "static", ip: "192.168.99.11"
+    openshift.vm.network "private_network", type: "dhcp"
+    # openshift.vm.network "private_network", type: "static", ip: "192.168.99.11"
     openshift.vm.hostname = "openshift"
     openshift.vm.provider "virtualbox" do |v|
       v.name = "openshift"
