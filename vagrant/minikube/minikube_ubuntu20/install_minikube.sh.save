@@ -6,7 +6,7 @@ ENABLE_ZSH=true
 sudo apt update
 sudo apt upgrade -y
 
-# Installation des paquets nécessaires
+# Installation des paquets nécessaires.
 
 # Add Docker's official GPG key:
 sudo apt-get update

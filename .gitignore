@@ -13,3 +13,5 @@ terraform/student-list/.terraform/
 
 #k8s-cluster configs
 configs
+
+*.sh.save
