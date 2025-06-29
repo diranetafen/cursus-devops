@@ -10,8 +10,8 @@ Vagrant.configure("2") do |config|
       # VM configuration
       minikube.vm.box = "eazytrainingfr/ubuntu"
       minikube.vm.box_version = "1.0"
-      minikube.vm.network "private_network", type: "dhcp"
-      #minikube.vm.network "private_network", type: "static", ip: "192.168.56.10"
+      #minikube.vm.network "private_network", type: "dhcp"
+      minikube.vm.network "private_network", type: "static", ip: "192.168.56.10"
       minikube.vm.hostname = "minikube-ufocal"
 
       # VirtualBox provider settings

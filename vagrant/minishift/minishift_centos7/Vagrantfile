@@ -23,8 +23,7 @@ Vagrant.configure("2") do |config|
   end
   config.vm.define "minishift" do |minishift|
     minishift.vm.box = "eazytrainingfr/centos7"
-    openshift.vm.network "private_network", type: "dhcp"
-    # minishift.vm.network "private_network", type: "static", ip: "192.168.99.10"
+    minishift.vm.network "private_network", type: "static", ip: "192.168.99.10"
     minishift.vm.hostname = "minishift"
     minishift.vm.provider "virtualbox" do |v|
         v.name = "minishift"
