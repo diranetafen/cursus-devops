@@ -1,0 +1,12 @@
+# Compiled files
+*.tfstate
+*.tfstate.backup
+
+# Module directory
+terraform/.terraform/
+terraform/student-list/.terraform/
+
+.idea
+
+# Vagrant file
+.vagrant
