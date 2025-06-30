@@ -8,8 +8,8 @@ Vagrant.configure("2") do |config|
   config.vm.define "docker" do |docker|
     docker.vm.box = "eazytrainingfr/ubuntu"
     docker.vm.box_version = "1.0"
-    # docker.vm.network "private_network", type: "dhcp"
-    docker.vm.network "private_network", type: "static", ip: "192.168.56.5"
+    docker.vm.network "private_network", type: "dhcp"
+    #docker.vm.network "private_network", type: "static", ip: "192.168.56.5"
     docker.vm.hostname = "docker"
     docker.vm.provider "virtualbox" do |v|
       v.name = "docker"
