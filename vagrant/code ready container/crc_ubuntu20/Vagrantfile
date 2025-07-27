@@ -17,25 +17,25 @@ Vagrant.configure("2") do |config|
 	  v.customize ['modifyvm', :id, '--nested-hw-virt', 'on']
     end
 
-    # crc.vm.provision :shell do |shell|
-    #   shell.path = "install_crc.sh"
-    #   shell.env = { 'ENABLE_ZSH' => ENV['ENABLE_ZSH'] }
-    # end
+    crc.vm.provision :shell do |shell|
+      shell.path = "install_crc.sh"
+      shell.env = { 'ENABLE_ZSH' => ENV['ENABLE_ZSH'] }
+    end
     
     # Étape 1 : installer les outils & ajouter vagrant au groupe libvirt
-    crc.vm.provision "shell", path: "install_tools.sh", run: "always", env: {
-      'ENABLE_ZSH' => ENV['ENABLE_ZSH']
-    }
+    #crc.vm.provision "shell", path: "install_tools.sh", run: "always", env: {
+    #  'ENABLE_ZSH' => ENV['ENABLE_ZSH']
+    #}
 
     # Étape 2 : après redémarrage, exécuter les commandes CRC en tant que vagrant
-    crc.vm.provision :shell do |shell|
-      shell.name = "Configure and start CRC as vagrant user"
-      shell.path = "install_crc_as_vagrant.sh"
-      shell.privileged = false
-      shell.env = {
-        'ENABLE_ZSH' => ENV['ENABLE_ZSH']
-      }
-    end
+    #crc.vm.provision :shell do |shell|
+    #  shell.name = "Configure and start CRC as vagrant user"
+    #  shell.path = "install_crc_as_vagrant.sh"
+    #  shell.privileged = false
+    #  shell.env = {
+    #    'ENABLE_ZSH' => ENV['ENABLE_ZSH']
+    #  }
+    #end
 
   end
 end
