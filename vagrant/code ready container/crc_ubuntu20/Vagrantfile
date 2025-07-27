@@ -6,7 +6,8 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "crc" do |crc|
-    crc.vm.box = "eazytrainingfr/ubuntu"
+    #crc.vm.box = "eazytrainingfr/ubuntu"
+    crc.vm.box = "bento/ubuntu-22.04"
     crc.vm.box_version = "1.0"
     crc.vm.network "private_network", type: "dhcp"
     crc.vm.hostname = "crc"
