@@ -20,10 +20,11 @@ curl -o /home/vagrant/pull-secret.txt https://eazytraining.fr/wp-content/uploads
 chown vagrant:vagrant /home/vagrant/pull-secret.txt
 
 # Téléchargement de CRC
-CRC_VERSION="2.9.0"
+#CRC_VERSION="2.9.0"
+CRC_VERSION="2.52.0"
 CRC_ARCHIVE="crc-linux-amd64.tar.xz"
-CRC_URL="https://developers.redhat.com/content-gateway/file/pub/openshift-v4/clients/crc/${CRC_VERSION}/${CRC_ARCHIVE}"
-
+#CRC_URL="https://developers.redhat.com/content-gateway/file/pub/openshift-v4/clients/crc/${CRC_VERSION}/${CRC_ARCHIVE}"
+CRC_URL="https://mirror.openshift.com/pub/openshift-v4/clients/crc/${CRC_VERSION}/${CRC_ARCHIVE}"
 wget $CRC_URL
 tar -xf $CRC_ARCHIVE
 sudo cp crc-linux-${CRC_VERSION}-amd64/crc /usr/local/bin/
@@ -31,18 +32,12 @@ sudo chmod +x /usr/local/bin/crc
 
 # Configuration de CRC
 # Exécuter crc setup et start via su - vagrant, avec environnement mis à jour
-# su - vagrant -c "
-#   crc config set pull-secret-file /home/vagrant/pull-secret.txt
-#   crc config set consent-telemetry yes
-#   crc config set skip-check-root-user true
-#   crc setup
-#   crc start
-# "
-sudo crc config set pull-secret-file /home/vagrant/pull-secret.txt
-sudo crc config set consent-telemetry yes
-sudo crc config set skip-check-root-user true
-sudo crc setup
-sudo crc start
+# CRC config et setup en tant que vagrant
+su - vagrant -c 'crc config set pull-secret-file /home/vagrant/pull-secret.txt'
+su - vagrant -c 'crc config set consent-telemetry yes'
+su - vagrant -c 'crc config set skip-check-root-user true'
+su - vagrant -c 'crc setup'
+su - vagrant -c 'crc start'
 
 # dns entry in hosts file
 # 127.0.0.1	api.crc.testing oauth-openshift.apps-crc.testing console-openshift-console.apps-crc.testing
