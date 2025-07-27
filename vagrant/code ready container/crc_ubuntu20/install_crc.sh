@@ -31,13 +31,18 @@ sudo chmod +x /usr/local/bin/crc
 
 # Configuration de CRC
 # Exécuter crc setup et start via su - vagrant, avec environnement mis à jour
-su - vagrant -c "
-  crc config set pull-secret-file /home/vagrant/pull-secret.txt
-  crc config set consent-telemetry yes
-  crc config set skip-check-root-user true
-  crc setup
-  crc start
-"
+# su - vagrant -c "
+#   crc config set pull-secret-file /home/vagrant/pull-secret.txt
+#   crc config set consent-telemetry yes
+#   crc config set skip-check-root-user true
+#   crc setup
+#   crc start
+# "
+sudo crc config set pull-secret-file /home/vagrant/pull-secret.txt
+sudo crc config set consent-telemetry yes
+sudo crc config set skip-check-root-user true
+sudo crc setup
+sudo crc start
 
 # dns entry in hosts file
 # 127.0.0.1	api.crc.testing oauth-openshift.apps-crc.testing console-openshift-console.apps-crc.testing
