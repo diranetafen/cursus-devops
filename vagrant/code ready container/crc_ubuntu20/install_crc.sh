@@ -15,7 +15,9 @@ sudo systemctl enable --now libvirtd
 sudo usermod -aG libvirt vagrant
 
 # Téléchargement de la pull secret
-curl -o /root/pull-secret.txt https://eazytraining.fr/wp-content/uploads/2022/10/openshift-crc-pull-secret.txt
+# Mettre le pull secret dans le home de vagrant
+curl -o /home/vagrant/pull-secret.txt https://eazytraining.fr/wp-content/uploads/2022/10/openshift-crc-pull-secret.txt
+chown vagrant:vagrant /home/vagrant/pull-secret.txt
 
 # Téléchargement de CRC
 CRC_VERSION="2.9.0"
@@ -28,11 +30,14 @@ sudo cp crc-linux-${CRC_VERSION}-amd64/crc /usr/local/bin/
 sudo chmod +x /usr/local/bin/crc
 
 # Configuration de CRC
-crc config set pull-secret-file /root/pull-secret.txt
-crc config set consent-telemetry yes
-crc config set skip-check-root-user true
-crc setup
-crc start
+# Exécuter crc setup et start via su - vagrant, avec environnement mis à jour
+su - vagrant -c "
+  crc config set pull-secret-file /home/vagrant/pull-secret.txt
+  crc config set consent-telemetry yes
+  crc config set skip-check-root-user true
+  crc setup
+  crc start
+"
 
 # dns entry in hosts file
 # 127.0.0.1	api.crc.testing oauth-openshift.apps-crc.testing console-openshift-console.apps-crc.testing
