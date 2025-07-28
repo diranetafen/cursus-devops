@@ -20,7 +20,6 @@ chown vagrant:vagrant /home/vagrant/pull-secret.txt
 
 cat <<'EOF' > /home/vagrant/install_crc_as_vagrant.sh
 #!/bin/bash
-set -euxo pipefail
 
 # CRC config et start
 crc config set pull-secret-file /home/vagrant/pull-secret.txt
