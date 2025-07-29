@@ -7,7 +7,7 @@ echo
 echo "[START] Configuration CRC..."
 echo
 
-crc config set memory 12288
+crc config set memory 10240
 crc config set cpus 4
 crc config set consent-telemetry no
 
