@@ -33,11 +33,13 @@ echo "[INSTALL] Version CRC installée :"
 echo
 crc version
 
-IP=\$(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+#IP=$(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
 #IP=$(ip -4 addr show scope global | grep inet | awk '{print $2}' | cut -d/ -f1 | head -n1)
+IP=$(ip -4 addr show | grep -oP '(?<=inet\s)192\.168\.\d+\.\d+' | head -n1)
+
 echo 
-echo "For this Stack, you will use \$IP IP Address"
-echo 
+echo "For this Stack, you will use $IP IP Address"
+echo  
 
 # Flag pour redémarrage
 touch /home/vagrant/needs_reboot
