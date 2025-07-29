@@ -40,7 +40,7 @@ cat ~/.crc/machines/crc/kubeadmin-password
 # Zsh setup si demandé
 if [[ ! -z "$ENABLE_ZSH" && "$ENABLE_ZSH" == "true" ]]; then
   echo "Installation de Zsh et Oh My Zsh"
-  sudo apt install -y zsh git
+  sudo yum install -y zsh git
   echo "vagrant" | chsh -s /usr/bin/zsh vagrant
   su - vagrant -c 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended'
   su - vagrant -c "git clone https://github.com/zsh-users/zsh-syntax-highlighting.git \${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"

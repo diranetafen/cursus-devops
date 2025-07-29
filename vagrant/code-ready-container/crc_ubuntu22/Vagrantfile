@@ -22,8 +22,7 @@ Vagrant.configure("2") do |config|
   end 
   
   # config.vm.provision "shell", path: "scripts/start_crc.sh", run: "always" 
-  config.vm.provision "shell", path: "scripts/start_crc.sh", run: "always", env: {
+  config.vm.provision "shell", path: "scripts/start_crc.sh", run: "always", privileged: false, env: {
     "ENABLE_ZSH" => "true"
   }
-
 end
