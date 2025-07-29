@@ -49,5 +49,11 @@ echo
 export PATH=$PATH:/usr/local/bin
 crc version
 
+IP=\$(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+#IP=$(ip -4 addr show scope global | grep inet | awk '{print $2}' | cut -d/ -f1 | head -n1)
+echo 
+echo "For this Stack, you will use \$IP IP Address"
+echo 
+
 # Redémarrage nécessaire pour prise en compte des groupes
 touch /home/vagrant/needs_reboot
