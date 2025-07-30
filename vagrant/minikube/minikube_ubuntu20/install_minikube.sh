@@ -1,5 +1,6 @@
 #!/bin/bash
-VERSION_STRING="5:23.0.6-1~ubuntu.20.04~focal"
+# VERSION_STRING="5:23.0.6-1~ubuntu.20.04~focal"
+VERSION_STRING="5:25.0.3-1~ubuntu.22.04~jammy"
 ENABLE_ZSH=true
 
 # Mise à jour du système
@@ -39,7 +40,7 @@ sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING con
 sudo systemctl enable docker
 sudo systemctl start docker
 sudo usermod -aG docker vagrant
-sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
+echo '1' | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
 
 # Installation de Minikube
 echo 
@@ -232,6 +233,8 @@ else
   echo "The zsh is not installed on this server"
 fi
 
+# IP=$(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+IP=$(ip -4 addr show | grep -oP '(?<=inet\s)192\.168\.\d+\.\d+' | head -n1)
 echo 
-echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
+echo "[INFO] For this Stack, you will use $IP IP Address"
 echo
