@@ -10,8 +10,3 @@ terraform/student-list/.terraform/
 
 # Vagrant file
 .vagrant
-
-#k8s-cluster configs
-configs
-
-*.sh.save
