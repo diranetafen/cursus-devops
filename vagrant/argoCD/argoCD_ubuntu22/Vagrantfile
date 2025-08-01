@@ -1,0 +1,19 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    config.vm.define "argocd" do |argocd|
+      argocd.vm.box = "eazytraining/ubuntu2204"
+      argocd.vm.box_version = "1.0"
+      argocd.vm.network "private_network", type: "dhcp"
+      argocd.vm.hostname = "argocd"
+      argocd.vm.provider "virtualbox" do |v|
+        v.name = "argocd"
+        v.memory = 6144
+        v.cpus = 4
+      end
+      argocd.vm.provision :shell do |shell|
+        shell.path = "install_argocd.sh"
+      end
+    end
+  end

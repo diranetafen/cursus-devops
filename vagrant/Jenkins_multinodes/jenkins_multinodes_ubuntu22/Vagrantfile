@@ -1,0 +1,19 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+    config.vm.define "jenkins" do |jenkins|
+      jenkins.vm.box = "eazytraining/ubuntu2204"
+      jenkins.vm.network "private_network", type: "static", ip: "192.168.99.10"
+      jenkins.vm.hostname = "jenkins-cluster"
+      jenkins.vm.provider "virtualbox" do |v|
+        v.name = "jenkins-cluster"
+        v.memory = 6144
+        v.cpus = 4
+      end
+      jenkins.vm.provision :shell do |shell|
+        shell.path = "install_jenkins.sh"
+      end
+    end
+  end
+  
