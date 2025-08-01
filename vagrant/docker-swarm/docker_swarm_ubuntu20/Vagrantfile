@@ -3,8 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "master" do |master|
-    master.vm.box = "eazytrainingfr/ubuntu"
-    master.vm.box_version = "1.0"
+    master.vm.box = "eazytraining/ubuntu2204"
     master.vm.network "private_network", type: "static", ip: "192.168.99.10"
     master.vm.hostname = "master"
     master.vm.provider "virtualbox" do |v|
