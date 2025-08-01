@@ -1,7 +1,6 @@
 Vagrant.configure("2") do |config|
   config.vm.define "ca" do |ca|
-    ca.vm.box = "eazytrainingfr/ubuntu"
-    ca.vm.box_version = "1.0"
+    ca.vm.box = "eazytraining/ubuntu2204"
     ca.vm.hostname = "ca"
     ca.vm.provider "virtualbox" do |vb|
       vb.memory = "2048"
@@ -10,8 +9,7 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.define "webserver" do |webserver|
-    webserver.vm.box = "eazytrainingfr/ubuntu" 
-    webserver.vm.box_version = "1.0"
+    webserver.vm.box = "eazytraining/ubuntu2204"
     webserver.vm.hostname = "webserver"
     webserver.vm.provider "virtualbox" do |vb|
       vb.memory = "2048"

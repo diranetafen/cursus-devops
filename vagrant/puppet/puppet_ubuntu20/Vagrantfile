@@ -3,8 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "puppet" do |puppet|
-    puppet.vm.box = "eazytrainingfr/ubuntu"
-    puppet.vm.box_version = "1.0"
+    puppet.vm.box = "eazytraining/ubuntu2204"
     puppet.vm.network "private_network", type: "static", ip: "192.168.99.10"
     puppet.vm.hostname = "puppet"
     puppet.vm.provider "virtualbox" do |v|
@@ -22,8 +21,7 @@ Vagrant.configure("2") do |config|
   cpu_client=2
   (1..clients).each do |i|
     config.vm.define "client-#{i}" do |client|
-      client.vm.box = "eazytrainingfr/ubuntu"
-      client.vm.box_version = "1.0"
+      client.vm.box = "eazytraining/ubuntu2204"
       client.vm.network "private_network", type: "static", ip: "192.168.99.1#{i}"
       client.vm.hostname = "client-#{i}"
       client.vm.provider "virtualbox" do |v|
