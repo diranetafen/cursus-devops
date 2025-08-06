@@ -3,7 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "puppet" do |puppet|
-    puppet.vm.box = "eazytrainingfr/ubuntu2204"
+    puppet.vm.box = "eazytraining/ubuntu2204"
     puppet.vm.box_version = "1.0"
     puppet.vm.network "private_network", type: "static", ip: "192.168.99.10"
     puppet.vm.hostname = "puppet"

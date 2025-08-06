@@ -1,5 +1,4 @@
 #!/bin/bash
-# VERSION_STRING="5:23.0.6-1~ubuntu.20.04~focal"
 VERSION_STRING="5:25.0.3-1~ubuntu.22.04~jammy"
 ENABLE_ZSH=true
 
