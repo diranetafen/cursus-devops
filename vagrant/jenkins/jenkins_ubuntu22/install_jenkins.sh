@@ -26,11 +26,9 @@ sudo usermod -aG docker vagrant
 systemctl enable docker
 systemctl start docker
 sudo apt install -y sshpass
-# curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-# chmod +x /usr/local/bin/docker-compose
 sudo mkdir jenkins && cd jenkins
-curl -o docker-compose.yml https://raw.githubusercontent.com/diranetafen/cursus-devops/refs/heads/master/jenkins/docker-compose.yml
-# /usr/local/bin/docker-compose up -d
+# curl -o docker-compose.yml https://raw.githubusercontent.com/diranetafen/cursus-devops/refs/heads/master/jenkins/docker-compose.yml
+curl -o docker-compose.yml https://raw.githubusercontent.com/OlivierKouokam/cursus-devops-stack/refs/heads/master/jenkins/docker-compose-official.yml
 docker compose up -d
 
 if [[ !(-z "$ENABLE_ZSH")  &&  ($ENABLE_ZSH == "true") ]]
