@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
     jenkins.vm.hostname = "jenkins"
     jenkins.vm.provider "virtualbox" do |v|
       v.name = "jenkins"
-      v.memory = 2048
+      v.memory = 4096
       v.cpus = 2
     end
     jenkins.vm.provision :shell do |shell|
