@@ -1,5 +1,11 @@
 #!/bin/bash
 
+echo
+echo "[FIX] CentOS 7 Repositories -> vault.centos.org"
+echo
+sudo sed -i 's|mirrorlist=|#mirrorlist=|g' /etc/yum.repos.d/CentOS-*.repo
+sudo sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-*.repo
+
 #Update Operating System  && install docker and  docker-compose
 echo
 echo ...Update and Docker installation
@@ -157,8 +163,11 @@ then
 fi
 
 echo "IMPORTANT !!!!!!!!!!!!!!"
-echo "For this Stack, you will use $(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p') IP Address"
+IP=$(ip -4 addr show | grep -oP '(?<=inet\s)192\.168\.\d+\.\d+' | head -n1)
+echo 
+echo "For this Stack, you will use $IP IP Address"
+echo 
 echo "For ArgoCD Server Use this credentials: User = admin && Password = "$argocd " with this NodePort Service = 30000"
-
+echo
 
 

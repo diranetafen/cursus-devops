@@ -18,8 +18,23 @@ curl https://eazytraining.fr/wp-content/uploads/2022/10/openshift-crc-pull-secre
 # download crc
 wget https://developers.redhat.com/content-gateway/file/pub/openshift-v4/clients/crc/2.9.0/crc-linux-amd64.tar.xz
 tar -xf crc-linux-amd64.tar.xz
+<<<<<<< HEAD
 cp ./crc-linux-2.9.0-amd64/crc /usr/bin/ && chmod +x /usr/bin/crc
 crc config set pull-secret-file /root/pull-secret.txt
+=======
+sudo cp crc-linux-${CRC_VERSION}-amd64/crc /usr/local/bin/
+sudo chmod +x /usr/local/bin/crc
+
+# Téléchargement du pull-secret
+curl -o /home/vagrant/pull-secret.txt https://eazytraining.fr/wp-content/uploads/2022/10/openshift-crc-pull-secret.txt
+chown vagrant:vagrant /home/vagrant/pull-secret.txt
+
+cat <<'EOF' > /home/vagrant/install_crc_as_vagrant.sh
+#!/bin/bash
+
+# CRC config et start
+crc config set pull-secret-file /home/vagrant/pull-secret.txt
+>>>>>>> 4d8ea5ff02d669bed46d545d953df6f70129f4d5
 crc config set consent-telemetry yes
 crc config set skip-check-root-user true
 crc setup

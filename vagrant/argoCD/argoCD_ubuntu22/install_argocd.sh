@@ -1,5 +1,4 @@
 #!/bin/bash
-# VERSION_STRING="5:23.0.6-1~ubuntu.20.04~focal"
 VERSION_STRING="5:25.0.3-1~ubuntu.22.04~jammy"
 ENABLE_ZSH=true
 
@@ -40,7 +39,7 @@ sudo apt-get install docker-ce=$VERSION_STRING docker-ce-cli=$VERSION_STRING con
 sudo systemctl enable docker
 sudo systemctl start docker
 sudo usermod -aG docker vagrant
-echo '1' | sudo tee /proc/sys/net/bridge/bridge-nf-call-iptables
+sudo echo '1' > /proc/sys/net/bridge/bridge-nf-call-iptables
 
 # Installation de Minikube
 echo 
@@ -233,8 +232,81 @@ else
   echo "The zsh is not installed on this server"
 fi
 
+###
+echo
+echo "[INFO] Déploiement d'Argo CD dans le cluster Kubernetes"
+echo
+
+# Créer le namespace argocd
+kubectl create namespace argocd
+
+# Appliquer le manifest officiel d'Argo CD
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# Attendre que les pods soient prêts
+echo
+echo "[INFO] Attente de l'initialisation des pods Argo CD (cela peut prendre quelques minutes)"
+echo
+kubectl wait --for=condition=available --timeout=180s deployment/argocd-server -n argocd
+
+# Exposer l'interface web d'Argo CD via NodePort (facile à utiliser dans Minikube)
+echo
+echo "[INFO] Exposition d'Argo CD en NodePort sur le port 30000"
+echo
+kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort", "ports": [{"port": 80, "targetPort": 8080, "nodePort": 30000}]}}'
+
+#Init Git directory
+sudo mkdir /repos
+cd /repos
+git init --bare
+
+# Outils DevOps complémentaires
+echo 
+echo "[INFO] Installation de kubectx et kubens"
+echo 
+sudo git clone https://github.com/ahmetb/kubectx /opt/kubectx
+sudo ln -s /opt/kubectx/kubectx /usr/local/bin/kubectx
+sudo ln -s /opt/kubectx/kubens /usr/local/bin/kubens
+echo "source /opt/kubectx/completion/kubectx.bash" >> ~/.bashrc
+echo "source /opt/kubectx/completion/kubens.bash" >> ~/.bashrc
+
+echo 
+echo "[INFO] Installation de la CLI Argo CD"
+echo 
+curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.9.3/argocd-linux-amd64
+chmod +x /usr/local/bin/argocd
+
+echo 
+echo "[INFO] Installation de Kustomize"
+echo 
+wget https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv3.8.5/kustomize_v3.8.5_linux_amd64.tar.gz
+tar zxf kustomize_v3.8.5_linux_amd64.tar.gz 
+sudo mv kustomize /usr/local/bin/
+
+echo
+echo "[INFO] Installation de Helm 3"
+echo
+curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
 # IP=$(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
 IP=$(ip -4 addr show | grep -oP '(?<=inet\s)192\.168\.\d+\.\d+' | head -n1)
 echo 
-echo "[INFO] For this Stack, you will use $IP IP Address"
+echo "For this Stack, you will use $IP IP Address"
+echo
+
+# Affichage de l'adresse d'accès
+# ARGOCD_IP=$(ip -f inet addr show enp0s8 | sed -En -e 's/.*inet ([0-9.]+).*/\1/p')
+ARGOCD_IP=$(ip -4 addr show | grep -oP '(?<=inet\s)192\.168\.\d+\.\d+' | head -n1)
+echo
+echo "[INFO] Interface Web Argo CD disponible sur : http://${ARGOCD_IP}:30000"
+echo
+
+# Récupération du mot de passe admin
+echo
+echo "[INFO] Récupération du mot de passe admin d'Argo CD"
+echo
+ARGOCD_ADMIN_PWD=$(kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 --decode)
+echo "Identifiant: admin"
+echo "Mot de passe: $ARGOCD_ADMIN_PWD"
 echo

@@ -1,0 +1,28 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "ubuntu/jammy64"
+  config.vm.hostname = "crc-ubuntu"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 12288
+    vb.cpus = 4
+  end
+
+  config.vm.network "private_network", type: "dhcp"
+
+  config.vm.provision "file", source: "scripts", destination: "/home/vagrant/scripts"
+
+  config.vm.provision "shell", path: "scripts/install_crc.sh", privileged: true
+
+  # ====== ICI on ajoute le trigger =======
+  config.trigger.after :provision do |trigger|
+    trigger.name = "reboot if needed"
+    trigger.run = {
+      inline: "if [ -f /home/vagrant/needs_reboot ]; then sudo rm /home/vagrant/needs_reboot; sudo reboot; fi"
+    }
+  end 
+  
+  # config.vm.provision "shell", path: "scripts/start_crc.sh", run: "always" 
+  config.vm.provision "shell", path: "scripts/start_crc.sh", run: "always", privileged: false, env: {
+    "ENABLE_ZSH" => "true"
+  }
+end

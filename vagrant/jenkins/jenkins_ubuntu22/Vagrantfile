@@ -3,10 +3,8 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "jenkins" do |jenkins|
-    jenkins.vm.box = "ubuntu/focal64"
-    # jenkins.vm.box = "eazytrainingfr/ubuntu"
-    jenkins.vm.box_version = "20240814.0.0"
-    # jenkins.vm.box_version = "1.0"
+    jenkins.vm.box = "eazytraining/ubuntu2204"
+    jenkins.vm.box_version = "1.0"
     jenkins.vm.network "private_network", type: "dhcp"
     jenkins.vm.hostname = "jenkins"
     jenkins.vm.provider "virtualbox" do |v|

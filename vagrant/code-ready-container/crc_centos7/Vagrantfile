@@ -1,0 +1,27 @@
+Vagrant.configure("2") do |config|
+  config.vm.box = "eazytrainingfr/centos7"
+  config.vm.hostname = "crc-centos"
+
+  config.vm.provider "virtualbox" do |vb|
+    vb.memory = 12288  # 10 Go, suffisant pour CRC 2.12.1
+    vb.cpus = 4
+  end
+
+  config.vm.network "private_network", type: "dhcp"
+
+  config.vm.provision "file", source: "scripts", destination: "/home/vagrant/scripts"
+
+  config.vm.provision "shell", path: "scripts/install_crc.sh", privileged: true
+
+  config.trigger.after :provision do |trigger|
+    trigger.name = "Reboot if needed"
+    trigger.run = {
+      inline: "if [ -f /home/vagrant/needs_reboot ]; then sudo rm /home/vagrant/needs_reboot; sudo reboot; fi"
+    }
+  end
+
+  # config.vm.provision "shell", path: "scripts/start_crc.sh", run: "always"
+  config.vm.provision "shell", path: "scripts/start_crc.sh", run: "always", privileged: false, env: {
+    "ENABLE_ZSH" => "true"
+  }
+end

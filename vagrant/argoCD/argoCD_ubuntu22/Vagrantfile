@@ -3,9 +3,8 @@
 
 Vagrant.configure("2") do |config|
     config.vm.define "argocd" do |argocd|
-      # argocd.vm.box = "eazytrainingfr/ubuntu"
-      argocd.vm.box = "ubuntu/jammy64"
-      # argocd.vm.box_version = "1.0"
+      argocd.vm.box = "eazytraining/ubuntu2204"
+      argocd.vm.box_version = "1.0"
       argocd.vm.network "private_network", type: "dhcp"
       argocd.vm.hostname = "argocd"
       argocd.vm.provider "virtualbox" do |v|
