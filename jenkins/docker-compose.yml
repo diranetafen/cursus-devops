@@ -12,6 +12,7 @@ services:
       - '443:8443'
       - '50000:50000'
     privileged: true
+    user: root    
     volumes:
       - 'jenkins_data:/bitnami'
       - '/var/run/docker.sock:/var/run/docker.sock'
