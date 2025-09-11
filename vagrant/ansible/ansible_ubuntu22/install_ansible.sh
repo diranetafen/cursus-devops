@@ -1,10 +1,10 @@
 #!/bin/bash
 ENABLE_ZSH=true
-VERSION_STRING=2.10.7+merged+base+2.10.8+dfsg-1
+VERSION_STRING=2.17.14-1ppa~jammy
 
 # Install Common Package
 sudo apt -y update
-sudo apt install -y python3 git curl wget 
+sudo apt install -y python3 python3-pip git curl wget 
 sudo apt install software-properties-common -y
 sudo add-apt-repository --yes --update ppa:ansible/ansible
 # sudo add-apt-repository ppa:ansible/ansible -y
@@ -16,7 +16,7 @@ then
   # #install ansible
   # curl -sS https://bootstrap.pypa.io/pip/3.6/get-pip.py | sudo python3
   # /usr/local/bin/pip3 install ansible==$VERSION_STRING  
-  sudo apt install ansible=$VERSION_STRING -y
+  sudo apt install ansible-core=$VERSION_STRING -y
 
   apt install -y sshpass
   
