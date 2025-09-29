@@ -15,10 +15,6 @@ sudo apt-get install x11-xkb-utils
 sudo setxkbmap fr
 echo "setxkbmap fr" >> /home/vagrant/.bashrc
 sudo chown vagrant:vagrant /home/vagrant/.bashrc
-sudo apt-get install x11-xkb-utils
-sudo setxkbmap fr
-echo "setxkbmap fr" >> /home/vagrant/.bashrc
-sudo chown vagrant:vagrant /home/vagrant/.bashrc
 sudo timedatectl set-timezone Europe/Paris
 sudo sed -i  "s/'de/'fr/g" /etc/xdg/autostart/input-source.desktop
 sudo sed -i  "s/'us/'fr/g" /etc/xdg/autostart/input-source.desktop

@@ -3,7 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.define "python" do |python|
-    python.vm.box = "eazytraining/ubuntu2204"
+    python.vm.box = "fasmat/ubuntu2204-desktop"
     python.vm.network "private_network", type: "dhcp"
     python.vm.hostname = "python"
     python.vm.provider "virtualbox" do |v|
