@@ -1,0 +1,4 @@
+---
+- src: https://github.com/ulrich-sun/ansible-roles-kubernetes.git
+  version: main
+  name: kubernetes
